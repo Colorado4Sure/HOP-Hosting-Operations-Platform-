@@ -1,0 +1,178 @@
+version: '3.9'
+
+# ─── HOP — Hosting Operations Platform ────────────────────────────────────────
+# docker-compose up -d
+# API:       http://localhost:3001/api/v1
+# Docs:      http://localhost:3001/api/docs   (dev only)
+# Dashboard: http://localhost:3000
+# DB Admin:  http://localhost:5050  (pgAdmin)
+# Redis UI:  http://localhost:8081  (RedisInsight)
+
+services:
+  # ─── PostgreSQL ─────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: hop-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hop_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hop_password}
+      POSTGRES_DB: ${POSTGRES_DB:-hop_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - '5432:5432'
+    networks:
+      - hop-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-hop_user} -d ${POSTGRES_DB:-hop_db}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: hop-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-} --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - '6379:6379'
+    networks:
+      - hop-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── HOP API ────────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: hop-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_PROVIDER: postgresql
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hop_user}:${POSTGRES_PASSWORD:-hop_password}@postgres:5432/${POSTGRES_DB:-hop_db}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@hop.local}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY is required}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      DEFAULT_CURRENCY: ${DEFAULT_CURRENCY:-USD}
+      DEFAULT_PLUGIN_TRUST_LEVEL: ${DEFAULT_PLUGIN_TRUST_LEVEL:-sandboxed}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@hop.local}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-HopAdmin123!}
+    ports:
+      - '3001:3001'
+    networks:
+      - hop-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3001/api/v1/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  # ─── HOP Dashboard ──────────────────────────────────────────────────────────
+  dashboard:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api/v1}
+    container_name: hop-dashboard
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api/v1}
+    ports:
+      - '3000:3000'
+    networks:
+      - hop-network
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # ─── Prisma Migrate (runs once on start) ─────────────────────────────────────
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: hop-migrate
+    command: sh -c "npx prisma migrate deploy && node dist/prisma/seed.js"
+    environment:
+      DATABASE_PROVIDER: postgresql
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hop_user}:${POSTGRES_PASSWORD:-hop_password}@postgres:5432/${POSTGRES_DB:-hop_db}
+      NODE_ENV: production
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@hop.local}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-HopAdmin123!}
+      SEED_ADMIN_FIRSTNAME: ${SEED_ADMIN_FIRSTNAME:-Super}
+      SEED_ADMIN_LASTNAME: ${SEED_ADMIN_LASTNAME:-Admin}
+      DEFAULT_CURRENCY: ${DEFAULT_CURRENCY:-USD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hop-network
+    restart: 'no'
+
+  # ─── pgAdmin (optional dev tool) ────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: hop-pgadmin
+    profiles: ['dev']
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@hop.local
+      PGADMIN_DEFAULT_PASSWORD: hopAdmin123
+    ports:
+      - '5050:80'
+    networks:
+      - hop-network
+    depends_on:
+      - postgres
+
+  # ─── RedisInsight (optional dev tool) ────────────────────────────────────────
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    container_name: hop-redisinsight
+    profiles: ['dev']
+    restart: unless-stopped
+    ports:
+      - '8081:8001'
+    networks:
+      - hop-network
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data:
+    name: hop_postgres_data
+  redis_data:
+    name: hop_redis_data
+
+networks:
+  hop-network:
+    name: hop_network
+    driver: bridge

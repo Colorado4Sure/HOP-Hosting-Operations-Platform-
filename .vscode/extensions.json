@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "prisma.prisma",
+    "bradlc.vscode-tailwindcss",
+    "ms-azuretools.vscode-docker",
+    "GitHub.copilot",
+    "GitHub.copilot-chat",
+    "redhat.vscode-yaml",
+    "mikestead.dotenv",
+    "christian-kohler.path-intellisense",
+    "aaron-bond.better-comments"
+  ]
+}

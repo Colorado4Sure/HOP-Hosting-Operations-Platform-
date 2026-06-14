@@ -1,0 +1,20 @@
+{
+  "name": "Paystack",
+  "slug": "paystack",
+  "version": "1.0.0",
+  "description": "Accept payments via Paystack — supports NGN, GHS, ZAR, USD, KES, and more.",
+  "author": "HOP Team",
+  "type": "payment",
+  "requiredPermissions": ["invoices:pay"],
+  "configSchema": {
+    "secretKey": {
+      "type": "string",
+      "required": true,
+      "secret": true,
+      "label": "Secret Key"
+    },
+    "publicKey": { "type": "string", "required": true, "label": "Public Key" }
+  },
+  "hopMinVersion": "1.0.0",
+  "webhookEndpoints": ["/api/v1/payment/webhook/paystack"]
+}

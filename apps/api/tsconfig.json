@@ -1,0 +1,13 @@
+{
+  "extends": "@hop/tsconfig/base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "paths": {
+      "@hop/shared-types": ["../../packages/shared-types/src/index.ts"],
+      "@hop/plugin-sdk": ["../../packages/plugin-sdk/src/index.ts"]
+    }
+  },
+  "include": ["src", "prisma"],
+  "exclude": ["dist", "node_modules", "test"]
+}

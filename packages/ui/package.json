@@ -1,0 +1,22 @@
+{
+  "name": "@hop/ui",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": "./index.js",
+    "./tailwind": "./tailwind.config.js",
+    "./tokens": "./tokens.js"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "@hop/tsconfig": "workspace:*",
+    "rimraf": "^5.0.5",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.4.0"
+  }
+}

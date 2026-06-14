@@ -1,0 +1,1076 @@
+// ─────────────────────────────────────────────────────────────────────────────
+//  HOP — Hosting Operations Platform — Prisma Schema
+//  Default: PostgreSQL. Switch DATABASE_PROVIDER env var for mysql/sqlite.
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = env("DATABASE_PROVIDER")
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  SuperAdmin
+  Admin
+  Staff
+  Reseller
+  Client
+}
+
+enum ClientStatus {
+  Active
+  Inactive
+  Suspended
+  Closed
+}
+
+enum BillingCycle {
+  OneTime
+  Monthly
+  Quarterly
+  SemiAnnually
+  Annually
+  Biennially
+  Triennially
+}
+
+enum InvoiceStatus {
+  Draft
+  Unpaid
+  Paid
+  PartiallyPaid
+  Overdue
+  Cancelled
+  Refunded
+}
+
+enum TransactionType {
+  Payment
+  Refund
+  Credit
+  Debit
+  Adjustment
+}
+
+enum TransactionStatus {
+  Pending
+  Completed
+  Failed
+  Cancelled
+  Disputed
+}
+
+enum ServiceStatus {
+  Active
+  Pending
+  Suspended
+  Terminated
+  Cancelled
+  Failed
+  PendingCancellation
+}
+
+enum DomainStatus {
+  Active
+  Expired
+  Transferred
+  Cancelled
+  Pending
+  PendingTransfer
+  Locked
+  GracePeriod
+  RedemptionPeriod
+}
+
+enum TicketStatus {
+  Open
+  Answered
+  CustomerReply
+  OnHold
+  Closed
+}
+
+enum TicketPriority {
+  Low
+  Medium
+  High
+  Critical
+}
+
+enum ProvisioningJobStatus {
+  Pending
+  Processing
+  Completed
+  Failed
+  Retrying
+  Cancelled
+}
+
+enum ProvisioningAction {
+  Create
+  Suspend
+  Unsuspend
+  Terminate
+  ChangePackage
+  Renew
+  GetUsage
+  CustomAction
+}
+
+enum NotificationChannel {
+  Email
+  SMS
+  Webhook
+  Slack
+}
+
+enum PluginType {
+  payment
+  provisioning
+  registrar
+  notification
+  widget
+  hook
+}
+
+enum PluginTrustLevel {
+  trusted
+  sandboxed
+}
+
+enum PluginStatus {
+  Active
+  Inactive
+  Error
+  UpdateAvailable
+}
+
+enum AffiliateStatus {
+  Pending
+  Active
+  Suspended
+  Closed
+}
+
+enum JobStatus {
+  Idle
+  Running
+  Success
+  Failed
+  Skipped
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Auth & RBAC
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id                    String    @id @default(uuid())
+  email                 String    @unique
+  passwordHash          String
+  firstName             String
+  lastName              String
+  role                  UserRole  @default(Client)
+  customPermissions     String[]  @default([])
+  twoFactorEnabled      Boolean   @default(false)
+  twoFactorSecret       String?
+  twoFactorBackupCodes  String[]  @default([])
+  isEmailVerified       Boolean   @default(false)
+  emailVerifyToken      String?
+  passwordResetToken    String?
+  passwordResetExpires  DateTime?
+  isActive              Boolean   @default(true)
+  lastLoginAt           DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  client                Client?
+  refreshTokens         RefreshToken[]
+  auditLogs             AuditLog[]
+  assignedTickets       Ticket[]       @relation("AssignedTickets")
+  ticketReplies         TicketReply[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model RefreshToken {
+  id          String    @id @default(uuid())
+  userId      String
+  token       String    @unique
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  permissions String[]
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("roles")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Clients
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ClientGroup {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  color           String?
+  discountPercent Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  clients         Client[]
+
+  @@map("client_groups")
+}
+
+model Client {
+  id            String       @id @default(uuid())
+  userId        String       @unique
+  firstName     String
+  lastName      String
+  companyName   String?
+  email         String       @unique
+  phone         String?
+  status        ClientStatus @default(Active)
+  currencyCode  String       @default("USD")
+  language      String       @default("en")
+  groupId       String?
+  creditBalance Float        @default(0)
+  taxId         String?
+  taxExempt     Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group         ClientGroup? @relation(fields: [groupId], references: [id])
+
+  addresses     ClientAddress[]
+  contacts      ClientContact[]
+  notes         ClientNote[]
+  activity      ClientActivity[]
+  invoices      Invoice[]
+  transactions  Transaction[]
+  services      Service[]
+  domains       Domain[]
+  tickets       Ticket[]
+  creditNotes   CreditNote[]
+  affiliate     Affiliate?
+
+  @@index([email])
+  @@index([status])
+  @@map("clients")
+}
+
+model ClientAddress {
+  id        String   @id @default(uuid())
+  clientId  String
+  line1     String
+  line2     String?
+  city      String
+  state     String?
+  postcode  String
+  country   String
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@map("client_addresses")
+}
+
+model ClientContact {
+  id          String   @id @default(uuid())
+  clientId    String
+  firstName   String
+  lastName    String
+  email       String
+  phone       String?
+  position    String?
+  permissions String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@map("client_contacts")
+}
+
+model ClientNote {
+  id         String   @id @default(uuid())
+  clientId   String
+  authorId   String
+  authorName String
+  content    String
+  isSticky   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@map("client_notes")
+}
+
+model ClientActivity {
+  id          String   @id @default(uuid())
+  clientId    String
+  type        String
+  description String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@map("client_activity")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Products & Services
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ProductGroup {
+  id          String    @id @default(uuid())
+  name        String
+  headline    String?
+  description String?
+  isVisible   Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products    Product[]
+
+  @@map("product_groups")
+}
+
+model Product {
+  id              String       @id @default(uuid())
+  groupId         String?
+  name            String
+  description     String?
+  type            String       @default("Other")
+  status          String       @default("Active")
+  moduleType      String?
+  moduleSettings  Json?
+  stockEnabled    Boolean      @default(false)
+  stockLevel      Int?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  group           ProductGroup? @relation(fields: [groupId], references: [id])
+  pricing         ProductPricing[]
+  configurableOptions ConfigurableOption[]
+  services        Service[]
+  addons          ProductAddon[]
+
+  @@index([status])
+  @@map("products")
+}
+
+model ProductPricing {
+  id           String       @id @default(uuid())
+  productId    String
+  billingCycle BillingCycle
+  currency     String
+  price        Float
+  setupFee     Float        @default(0)
+
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, billingCycle, currency])
+  @@map("product_pricing")
+}
+
+model ConfigurableOption {
+  id         String                    @id @default(uuid())
+  productId  String
+  name       String
+  type       String                    @default("Dropdown")
+  isRequired Boolean                   @default(false)
+
+  product    Product                   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  values     ConfigurableOptionValue[]
+
+  @@index([productId])
+  @@map("configurable_options")
+}
+
+model ConfigurableOptionValue {
+  id            String             @id @default(uuid())
+  optionId      String
+  name          String
+  priceModifier Float              @default(0)
+  sortOrder     Int                @default(0)
+
+  option        ConfigurableOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@index([optionId])
+  @@map("configurable_option_values")
+}
+
+model ProductAddon {
+  id          String           @id @default(uuid())
+  productId   String?
+  name        String
+  description String?
+  isRecurring Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+
+  product     Product?         @relation(fields: [productId], references: [id])
+  pricing     AddonPricing[]
+  serviceAddons ServiceAddon[]
+
+  @@map("product_addons")
+}
+
+model AddonPricing {
+  id           String       @id @default(uuid())
+  addonId      String
+  billingCycle BillingCycle
+  currency     String
+  price        Float
+  setupFee     Float        @default(0)
+
+  addon        ProductAddon @relation(fields: [addonId], references: [id], onDelete: Cascade)
+
+  @@unique([addonId, billingCycle, currency])
+  @@map("addon_pricing")
+}
+
+model Service {
+  id                  String        @id @default(uuid())
+  clientId            String
+  productId           String
+  status              ServiceStatus @default(Pending)
+  billingCycle        BillingCycle
+  currency            String
+  amount              Float
+  setupFee            Float         @default(0)
+  nextDueDate         DateTime
+  registrationDate    DateTime      @default(now())
+  suspendedAt         DateTime?
+  terminatedAt        DateTime?
+  cancellationDate    DateTime?
+  cancellationReason  String?
+  domain              String?
+  username            String?
+  password            String?
+  serverHostname      String?
+  configOptions       Json?
+  notes               String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  client              Client        @relation(fields: [clientId], references: [id])
+  product             Product       @relation(fields: [productId], references: [id])
+  addons              ServiceAddon[]
+  invoiceItems        InvoiceLineItem[]
+  provisioningJobs    ProvisioningJob[]
+  usageRecords        ServiceUsage[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([nextDueDate])
+  @@map("services")
+}
+
+model ServiceAddon {
+  id           String        @id @default(uuid())
+  serviceId    String
+  addonId      String
+  status       ServiceStatus @default(Active)
+  billingCycle BillingCycle
+  amount       Float
+  nextDueDate  DateTime
+  createdAt    DateTime      @default(now())
+
+  service      Service       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  addon        ProductAddon  @relation(fields: [addonId], references: [id])
+
+  @@index([serviceId])
+  @@map("service_addons")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Billing & Invoicing
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Invoice {
+  id            String        @id @default(uuid())
+  invoiceNumber String        @unique
+  clientId      String
+  status        InvoiceStatus @default(Draft)
+  currency      String
+  subtotal      Float
+  taxTotal      Float         @default(0)
+  total         Float
+  amountPaid    Float         @default(0)
+  notes         String?
+  dueDate       DateTime
+  paidAt        DateTime?
+  sentAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  client        Client        @relation(fields: [clientId], references: [id])
+  lineItems     InvoiceLineItem[]
+  transactions  Transaction[]
+  creditNotes   CreditNote[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("invoices")
+}
+
+model InvoiceLineItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  description String
+  quantity    Float    @default(1)
+  unitPrice   Float
+  taxRate     Float    @default(0)
+  taxAmount   Float    @default(0)
+  subtotal    Float
+  total       Float
+  serviceId   String?
+  domainId    String?
+
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  service     Service? @relation(fields: [serviceId], references: [id])
+  domain      Domain?  @relation(fields: [domainId], references: [id])
+
+  @@index([invoiceId])
+  @@map("invoice_line_items")
+}
+
+model Transaction {
+  id                    String            @id @default(uuid())
+  clientId              String
+  invoiceId             String?
+  type                  TransactionType
+  status                TransactionStatus @default(Pending)
+  gateway               String
+  gatewayTransactionId  String?
+  amount                Float
+  currency              String
+  fee                   Float?
+  description           String?
+  metadata              Json?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  client                Client            @relation(fields: [clientId], references: [id])
+  invoice               Invoice?          @relation(fields: [invoiceId], references: [id])
+
+  @@index([clientId])
+  @@index([invoiceId])
+  @@index([status])
+  @@map("transactions")
+}
+
+model CreditNote {
+  id               String   @id @default(uuid())
+  clientId         String
+  invoiceId        String?
+  creditNoteNumber String   @unique
+  amount           Float
+  currency         String
+  reason           String
+  appliedAmount    Float    @default(0)
+  createdAt        DateTime @default(now())
+
+  client           Client   @relation(fields: [clientId], references: [id])
+  invoice          Invoice? @relation(fields: [invoiceId], references: [id])
+
+  @@index([clientId])
+  @@map("credit_notes")
+}
+
+model TaxRule {
+  id          String   @id @default(uuid())
+  name        String
+  rate        Float
+  country     String?
+  state       String?
+  isCompound  Boolean  @default(false)
+  appliesTo   String   @default("All")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("tax_rules")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Provisioning / Servers
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Server {
+  id              String   @id @default(uuid())
+  name            String
+  hostname        String
+  ipAddress       String
+  type            String
+  moduleType      String
+  moduleSettings  Json?
+  maxAccounts     Int      @default(0)
+  currentAccounts Int      @default(0)
+  isActive        Boolean  @default(true)
+  lastCheckedAt   DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  provisioningJobs ProvisioningJob[]
+
+  @@map("servers")
+}
+
+model ProvisioningJob {
+  id           String                @id @default(uuid())
+  serviceId    String
+  serverId     String?
+  action       ProvisioningAction
+  status       ProvisioningJobStatus @default(Pending)
+  attempts     Int                   @default(0)
+  maxAttempts  Int                   @default(3)
+  payload      Json?
+  result       Json?
+  errorMessage String?
+  scheduledAt  DateTime?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime              @default(now())
+
+  service      Service               @relation(fields: [serviceId], references: [id])
+  server       Server?               @relation(fields: [serverId], references: [id])
+
+  @@index([serviceId])
+  @@index([status])
+  @@map("provisioning_jobs")
+}
+
+model ServiceUsage {
+  id               String   @id @default(uuid())
+  serviceId        String
+  diskUsage        Float?
+  diskLimit        Float?
+  bandwidthUsage   Float?
+  bandwidthLimit   Float?
+  cpuUsage         Float?
+  memoryUsage      Float?
+  inodeUsage       Float?
+  inodeLimit       Float?
+  retrievedAt      DateTime @default(now())
+
+  service          Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
+  @@map("service_usage")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Domains
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Domain {
+  id               String       @id @default(uuid())
+  clientId         String
+  domain           String
+  tld              String
+  status           DomainStatus @default(Pending)
+  registrar        String
+  registrationDate DateTime
+  expiryDate       DateTime
+  renewalDate      DateTime?
+  autoRenew        Boolean      @default(true)
+  idProtection     Boolean      @default(false)
+  nameservers      Json         @default("[]")
+  registrantContact Json?
+  adminContact     Json?
+  techContact      Json?
+  epp              String?
+  notes            String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  client           Client       @relation(fields: [clientId], references: [id])
+  invoiceItems     InvoiceLineItem[]
+
+  @@index([clientId])
+  @@index([domain])
+  @@index([expiryDate])
+  @@map("domains")
+}
+
+model TldPricing {
+  id            String   @id @default(uuid())
+  tld           String
+  registrar     String
+  registerPrice Float
+  renewPrice    Float
+  transferPrice Float
+  currency      String   @default("USD")
+  isActive      Boolean  @default(true)
+  updatedAt     DateTime @updatedAt
+
+  @@unique([tld, registrar])
+  @@map("tld_pricing")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Support
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Department {
+  id                    String   @id @default(uuid())
+  name                  String
+  description           String?
+  email                 String?
+  isHidden              Boolean  @default(false)
+  autoResponseEnabled   Boolean  @default(true)
+  slaHours              Int?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  tickets               Ticket[]
+  cannedResponses       CannedResponse[]
+
+  @@map("departments")
+}
+
+model Ticket {
+  id             String         @id @default(uuid())
+  ticketNumber   String         @unique
+  clientId       String
+  departmentId   String
+  assignedToId   String?
+  subject        String
+  status         TicketStatus   @default(Open)
+  priority       TicketPriority @default(Medium)
+  serviceId      String?
+  slaExpiresAt   DateTime?
+  lastRepliedAt  DateTime?
+  closedAt       DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  client         Client         @relation(fields: [clientId], references: [id])
+  department     Department     @relation(fields: [departmentId], references: [id])
+  assignedTo     User?          @relation("AssignedTickets", fields: [assignedToId], references: [id])
+  replies        TicketReply[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([departmentId])
+  @@map("tickets")
+}
+
+model TicketReply {
+  id          String            @id @default(uuid())
+  ticketId    String
+  authorId    String
+  authorName  String
+  authorType  String            @default("Client")
+  message     String            @db.Text
+  isInternal  Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  ticket      Ticket            @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author      User              @relation(fields: [authorId], references: [id])
+  attachments TicketAttachment[]
+
+  @@index([ticketId])
+  @@map("ticket_replies")
+}
+
+model TicketAttachment {
+  id        String      @id @default(uuid())
+  replyId   String
+  filename  String
+  mimeType  String
+  size      Int
+  url       String
+  createdAt DateTime    @default(now())
+
+  reply     TicketReply @relation(fields: [replyId], references: [id], onDelete: Cascade)
+
+  @@index([replyId])
+  @@map("ticket_attachments")
+}
+
+model KnowledgebaseCategory {
+  id           String                  @id @default(uuid())
+  name         String
+  description  String?
+  parentId     String?
+  sortOrder    Int                     @default(0)
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  parent       KnowledgebaseCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children     KnowledgebaseCategory[] @relation("CategoryTree")
+  articles     KnowledgebaseArticle[]
+
+  @@map("knowledgebase_categories")
+}
+
+model KnowledgebaseArticle {
+  id          String                @id @default(uuid())
+  categoryId  String
+  title       String
+  content     String                @db.Text
+  slug        String                @unique
+  status      String                @default("Published")
+  views       Int                   @default(0)
+  helpful     Int                   @default(0)
+  notHelpful  Int                   @default(0)
+  tags        String[]              @default([])
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  category    KnowledgebaseCategory @relation(fields: [categoryId], references: [id])
+
+  @@index([categoryId])
+  @@index([slug])
+  @@map("knowledgebase_articles")
+}
+
+model CannedResponse {
+  id           String      @id @default(uuid())
+  title        String
+  content      String      @db.Text
+  departmentId String?
+  createdAt    DateTime    @default(now())
+
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  @@map("canned_responses")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Notifications & Email Templates
+// ─────────────────────────────────────────────────────────────────────────────
+
+model EmailTemplate {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  subject   String
+  bodyHtml  String   @db.Text
+  bodyText  String?  @db.Text
+  variables String[] @default([])
+  isSystem  Boolean  @default(false)
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("email_templates")
+}
+
+model NotificationLog {
+  id           String              @id @default(uuid())
+  clientId     String?
+  channel      NotificationChannel
+  recipient    String
+  templateSlug String?
+  subject      String?
+  body         String              @db.Text
+  status       String              @default("Queued")
+  errorMessage String?
+  sentAt       DateTime?
+  createdAt    DateTime            @default(now())
+
+  @@index([clientId])
+  @@index([status])
+  @@map("notification_logs")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Affiliates & Promotions
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Affiliate {
+  id             String          @id @default(uuid())
+  clientId       String          @unique
+  code           String          @unique
+  status         AffiliateStatus @default(Pending)
+  commissionType String          @default("Percentage")
+  commissionValue Float          @default(10)
+  balance        Float           @default(0)
+  totalEarned    Float           @default(0)
+  totalPaid      Float           @default(0)
+  payoutThreshold Float          @default(50)
+  payoutMethod   String?
+  payoutDetails  Json?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  client         Client          @relation(fields: [clientId], references: [id])
+  referrals      Referral[]
+
+  @@map("affiliates")
+}
+
+model Referral {
+  id               String    @id @default(uuid())
+  affiliateId      String
+  clientId         String
+  commissionAmount Float
+  status           String    @default("Pending")
+  invoiceId        String?
+  paidAt           DateTime?
+  createdAt        DateTime  @default(now())
+
+  affiliate        Affiliate @relation(fields: [affiliateId], references: [id])
+
+  @@index([affiliateId])
+  @@map("referrals")
+}
+
+model DiscountCode {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  description String?
+  type        String    @default("Percentage")
+  value       Float
+  currency    String?
+  usageLimit  Int?
+  usedCount   Int       @default(0)
+  startsAt    DateTime?
+  expiresAt   DateTime?
+  appliesTo   String    @default("All")
+  productIds  String[]  @default([])
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  @@index([code])
+  @@map("discount_codes")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Plugin System
+// ─────────────────────────────────────────────────────────────────────────────
+
+model PluginInstallation {
+  id           String           @id @default(uuid())
+  slug         String           @unique
+  manifest     Json
+  status       PluginStatus     @default(Inactive)
+  trustLevel   PluginTrustLevel @default(sandboxed)
+  config       Json?
+  errorMessage String?
+  installedAt  DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@map("plugin_installations")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Audit Log
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  userEmail  String?
+  ipAddress  String?
+  userAgent  String?
+  action     String
+  resource   String
+  resourceId String?
+  before     Json?
+  after      Json?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  user       User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Automation / Cron
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AutomationJob {
+  id                  String    @id @default(uuid())
+  name                String
+  slug                String    @unique
+  description         String?
+  schedule            String
+  isEnabled           Boolean   @default(true)
+  lastRunAt           DateTime?
+  lastRunStatus       JobStatus?
+  lastRunDurationMs   Int?
+  nextRunAt           DateTime?
+  errorMessage        String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  runLogs             JobRunLog[]
+
+  @@map("automation_jobs")
+}
+
+model JobRunLog {
+  id           String        @id @default(uuid())
+  jobSlug      String
+  status       JobStatus
+  startedAt    DateTime
+  completedAt  DateTime?
+  durationMs   Int?
+  output       String?       @db.Text
+  errorMessage String?
+
+  job          AutomationJob @relation(fields: [jobSlug], references: [slug], onDelete: Cascade)
+
+  @@index([jobSlug])
+  @@map("job_run_logs")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Settings
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Setting {
+  key       String   @id
+  value     String   @db.Text
+  group     String   @default("general")
+  isSecret  Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@index([group])
+  @@map("settings")
+}
