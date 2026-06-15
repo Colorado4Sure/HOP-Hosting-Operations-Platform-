@@ -1,6 +1,15 @@
 import type { Service, ServiceUsage } from "@hop/shared-types";
 import { apiClient } from "./client";
 
+export interface CreateServiceData {
+  clientId: string;
+  productId: string;
+  billingCycle?: string;
+  registrationDate?: string;
+  nextDueDate?: string;
+  notes?: string;
+}
+
 export const servicesApi = {
   list: (params?: {
     page?: number;
@@ -11,6 +20,9 @@ export const servicesApi = {
     apiClient.get<{ data: Service[]; meta: unknown }>("/services", { params }),
 
   get: (id: string) => apiClient.get<Service>(`/services/${id}`),
+
+  create: (data: CreateServiceData) =>
+    apiClient.post<Service>("/services", data),
 
   getUsage: (id: string) =>
     apiClient.get<ServiceUsage>(`/services/${id}/usage`),

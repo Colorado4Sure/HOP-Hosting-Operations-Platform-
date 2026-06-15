@@ -31,9 +31,12 @@ RUN pnpm --filter @hop/api db:generate
 # Build the API
 RUN pnpm --filter @hop/api build
 
+# Compile seed script (outside src/, needs separate tsconfig)
+RUN cd apps/api && npx tsc -p tsconfig.seed.json --skipLibCheck 2>/dev/null || true
+
 # ─── Stage 3: Production image ────────────────────────────────────────────────
 FROM node:20-alpine AS runner
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init openssl
 WORKDIR /app
 
 ENV NODE_ENV=production

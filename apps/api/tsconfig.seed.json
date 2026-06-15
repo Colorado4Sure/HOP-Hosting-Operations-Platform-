@@ -1,0 +1,15 @@
+{
+  "extends": "@hop/tsconfig/base.json",
+  "compilerOptions": {
+    "outDir": "dist/prisma",
+    "rootDir": "prisma",
+    "strictPropertyInitialization": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": ["prisma/seed.ts"],
+  "exclude": ["node_modules"]
+}

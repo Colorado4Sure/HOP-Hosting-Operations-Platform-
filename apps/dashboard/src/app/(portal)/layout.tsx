@@ -30,15 +30,16 @@ const navLinks = [
 
 export default function PortalLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const { user, clearAuth, tokens } = useAuthStore();
+  const { user, clearAuth, tokens, hasHydrated } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    if (!user) {
+    if (hasHydrated && !user) {
       router.replace('/login');
     }
-  }, [user, router]);
+  }, [hasHydrated, user, router]);
 
+  if (!hasHydrated) return null;
   if (!user) return null;
 
   async function handleLogout() {

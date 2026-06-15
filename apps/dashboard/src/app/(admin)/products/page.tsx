@@ -10,15 +10,42 @@ import {
   Trash2,
   Eye,
   EyeOff,
+  Loader2,
 } from "lucide-react";
 import { productsApi } from "@/lib/api/products";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const PRODUCT_TYPES = ["Shared", "Reseller", "VPS", "Dedicated", "Domain", "SSL", "Other"];
 
 export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    type: "Shared",
+    status: "Active",
+  });
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -33,6 +60,23 @@ export default function AdminProductsPage() {
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["admin-products"] }),
   });
+
+  const createMutation = useMutation({
+    mutationFn: () => productsApi.createProduct(form),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      setOpen(false);
+      setForm({ name: "", description: "", type: "Shared", status: "Active" });
+      setFormError(null);
+    },
+    onError: (err: Error) => setFormError(err.message ?? "Failed to create product"),
+  });
+
+  const handleCreate = () => {
+    setFormError(null);
+    if (!form.name.trim()) { setFormError("Product name is required."); return; }
+    createMutation.mutate();
+  };
 
   const statusColors: Record<string, string> = {
     Active: "bg-green-100 text-green-700",
@@ -49,7 +93,7 @@ export default function AdminProductsPage() {
             Manage hosting plans, addons, and pricing
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Product
         </Button>
@@ -81,7 +125,7 @@ export default function AdminProductsPage() {
               <p className="text-sm text-muted-foreground">
                 Create your first product to start selling
               </p>
-              <Button className="mt-4" size="sm">
+              <Button className="mt-4" size="sm" onClick={() => setOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Product
               </Button>
@@ -149,6 +193,96 @@ export default function AdminProductsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Add Product Dialog */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Product</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="prod-name">
+                Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="prod-name"
+                value={form.name}
+                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                placeholder="e.g. Starter Shared Hosting"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="prod-desc">Description</Label>
+              <Textarea
+                id="prod-desc"
+                value={form.description}
+                onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+                placeholder="Brief description of this product…"
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="prod-type">Type</Label>
+                <Select
+                  value={form.type}
+                  onValueChange={(v) => setForm((p) => ({ ...p, type: v }))}
+                >
+                  <SelectTrigger id="prod-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRODUCT_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="prod-status">Status</Label>
+                <Select
+                  value={form.status}
+                  onValueChange={(v) => setForm((p) => ({ ...p, status: v }))}
+                >
+                  <SelectTrigger id="prod-status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                    <SelectItem value="Hidden">Hidden</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {formError && (
+              <p className="text-sm text-destructive rounded border border-destructive/30 bg-destructive/10 px-3 py-2">
+                {formError}
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreate} disabled={createMutation.isPending}>
+              {createMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Create Product
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

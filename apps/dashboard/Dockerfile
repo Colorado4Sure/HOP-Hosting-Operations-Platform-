@@ -34,11 +34,13 @@ RUN pnpm --filter @hop/dashboard build
 
 # ─── Stage 3: Production image ────────────────────────────────────────────────
 FROM node:20-alpine AS runner
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init wget
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
 
 RUN addgroup -g 1001 -S hopgroup && adduser -S hopuser -u 1001 -G hopgroup
 
@@ -50,8 +52,8 @@ USER hopuser
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000', (r) => process.exit(r.statusCode < 400 ? 0 : 1))"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD wget -qO- http://localhost:3000/login > /dev/null 2>&1 || exit 1
 
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "apps/dashboard/server.js"]

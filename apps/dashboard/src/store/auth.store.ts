@@ -6,9 +6,11 @@ interface AuthState {
   user: User | null;
   tokens: AuthTokens | null;
   isAuthenticated: boolean;
+  hasHydrated: boolean;
   setAuth: (user: User, tokens: AuthTokens) => void;
   updateTokens: (tokens: AuthTokens) => void;
   clearAuth: () => void;
+  setHasHydrated: (v: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -17,6 +19,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       tokens: null,
       isAuthenticated: false,
+      hasHydrated: false,
 
       setAuth: (user, tokens) =>
         set({ user, tokens, isAuthenticated: true }),
@@ -26,6 +29,8 @@ export const useAuthStore = create<AuthState>()(
 
       clearAuth: () =>
         set({ user: null, tokens: null, isAuthenticated: false }),
+
+      setHasHydrated: (v) => set({ hasHydrated: v }),
     }),
     {
       name: 'hop-auth',
@@ -35,6 +40,9 @@ export const useAuthStore = create<AuthState>()(
         tokens: state.tokens,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     },
   ),
 );
