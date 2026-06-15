@@ -1,5 +1,5 @@
 import {
-  IsString, IsEmail, IsOptional, IsEnum, IsBoolean, IsNumber, ValidateNested, IsArray,
+  IsString, IsEmail, IsOptional, IsEnum, IsBoolean, IsNumber, ValidateNested, IsArray, IsUUID,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
@@ -28,6 +28,17 @@ export class CreateClientDto {
   @ApiPropertyOptional({ type: [CreateClientAddressDto] })
   @IsArray() @ValidateNested({ each: true }) @Type(() => CreateClientAddressDto) @IsOptional()
   addresses?: CreateClientAddressDto[];
+
+  @ApiPropertyOptional({ enum: ['SuperAdmin', 'Admin', 'Staff', 'Reseller', 'Client'] })
+  @IsEnum(['SuperAdmin', 'Admin', 'Staff', 'Reseller', 'Client']) @IsOptional()
+  role?: string;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsArray() @IsString({ each: true }) @IsOptional()
+  customPermissions?: string[];
+
+  @ApiPropertyOptional() @IsString() @IsOptional()
+  password?: string;
 }
 
 export class UpdateClientDto extends PartialType(CreateClientDto) {}

@@ -96,6 +96,17 @@ export class NotificationsService {
     return this.prisma.emailTemplate.findMany({ orderBy: { name: "asc" } });
   }
 
+  async createTemplate(data: {
+    name: string;
+    slug: string;
+    subject: string;
+    bodyHtml: string;
+    bodyText?: string;
+    variables?: string[];
+  }) {
+    return this.prisma.emailTemplate.create({ data });
+  }
+
   async updateTemplate(
     id: string,
     data: { subject?: string; bodyHtml?: string; bodyText?: string },
@@ -104,6 +115,12 @@ export class NotificationsService {
       where: { id },
       data: { ...data, version: { increment: 1 } },
     });
+  }
+
+  async deleteTemplate(id: string) {
+    const tpl = await this.prisma.emailTemplate.findUnique({ where: { id } });
+    if (tpl?.isSystem) throw new Error('Cannot delete system templates');
+    return this.prisma.emailTemplate.delete({ where: { id } });
   }
 
   async getLogs(params: { page?: number; perPage?: number; status?: string }) {

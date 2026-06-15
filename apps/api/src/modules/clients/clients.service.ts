@@ -3,6 +3,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CreateClientDto, UpdateClientDto, CreateClientNoteDto, ListClientsDto } from './dto/client.dto';
 import { Prisma } from '@prisma/client';
+import * as argon2 from 'argon2';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class ClientsService {
@@ -73,7 +75,12 @@ export class ClientsService {
     const existing = await this.prisma.client.findUnique({ where: { email: dto.email } });
     if (existing) throw new ConflictException('A client with this email already exists');
 
-    const { addresses, ...clientData } = dto;
+    const existingUser = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (existingUser) throw new ConflictException('A user with this email already exists');
+
+    const { addresses, role, customPermissions, password, ...clientData } = dto;
+    const tempPassword = password || uuidv4().replace(/-/g, '').slice(0, 12) + 'A1!';
+    const passwordHash = await argon2.hash(tempPassword);
 
     const client = await this.prisma.client.create({
       data: {
@@ -83,8 +90,10 @@ export class ClientsService {
             email: dto.email,
             firstName: dto.firstName,
             lastName: dto.lastName,
-            passwordHash: '', // Set separately if needed
-            role: 'Client',
+            passwordHash,
+            role: (role as any) ?? 'Client',
+            customPermissions: customPermissions ?? [],
+            isEmailVerified: true, // admin-created accounts are pre-verified
           },
         },
         addresses: addresses
@@ -101,7 +110,7 @@ export class ClientsService {
       resourceId: client.id,
     });
 
-    return client;
+    return { ...client, temporaryPassword: password ? undefined : tempPassword };
   }
 
   async update(id: string, dto: UpdateClientDto, actorId: string) {

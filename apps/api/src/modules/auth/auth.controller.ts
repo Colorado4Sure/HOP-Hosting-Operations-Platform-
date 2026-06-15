@@ -10,6 +10,8 @@ import {
   Ip,
   Param,
   Patch,
+  Query,
+  Delete,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -122,5 +124,41 @@ export class AuthController {
   @Post('2fa/disable')
   disable2FA(@CurrentUser() user: JwtPayload, @Body() dto: VerifyTwoFactorDto) {
     return this.authService.disable2FA(user.sub, dto.code);
+  }
+
+  // ─── Admin: User Management ──────────────────────────────────────────────
+
+  @ApiOperation({ summary: 'List all users (admin)' })
+  @ApiBearerAuth('JWT')
+  @UseGuards(AuthGuard('jwt'))
+  @Get('users')
+  listUsers(
+    @CurrentUser() user: JwtPayload,
+    @Query('page') page?: number,
+    @Query('perPage') perPage?: number,
+    @Query('search') search?: string,
+    @Query('role') role?: string,
+  ) {
+    return this.authService.listUsers({ page, perPage, search, role });
+  }
+
+  @ApiOperation({ summary: 'Update user role and permissions (admin)' })
+  @ApiBearerAuth('JWT')
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('users/:id')
+  updateUser(
+    @Param('id') id: string,
+    @Body() body: { role?: string; customPermissions?: string[]; isActive?: boolean },
+    @CurrentUser() actor: JwtPayload,
+  ) {
+    return this.authService.updateUser(id, body, actor.sub);
+  }
+
+  @ApiOperation({ summary: 'Delete a user (admin)' })
+  @ApiBearerAuth('JWT')
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('users/:id')
+  deleteUser(@Param('id') id: string, @CurrentUser() actor: JwtPayload) {
+    return this.authService.deleteUser(id, actor.sub);
   }
 }

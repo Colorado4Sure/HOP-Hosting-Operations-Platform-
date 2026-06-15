@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Body,
   Param,
   Query,
@@ -62,6 +63,13 @@ export class SettingsController {
     @Body() body: Partial<{ name: string; description: string; permissions: string[] }>,
   ) {
     return this.settingsService.updateRole(id, body);
+  }
+
+  @ApiOperation({ summary: 'Delete a role' })
+  @Permissions('settings:update')
+  @Delete('roles/:id')
+  deleteRole(@Param('id') id: string) {
+    return this.settingsService.deleteRole(id);
   }
 
   @ApiOperation({ summary: 'Get audit logs' })

@@ -81,6 +81,10 @@ export class SettingsService {
     return this.prisma.role.update({ where: { id }, data });
   }
 
+  async deleteRole(id: string) {
+    return this.prisma.role.delete({ where: { id } });
+  }
+
   // ─── Audit Logs ────────────────────────────────────────────────────────────
 
   async getAuditLogs(params: { page?: number; perPage?: number; userId?: string; resource?: string }) {

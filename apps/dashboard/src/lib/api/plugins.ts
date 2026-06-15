@@ -8,18 +8,18 @@ export const pluginsApi = {
   get: (slug: string) =>
     apiClient.get<PluginInstallation>(`/plugins/${slug}`),
 
-  install: (data: { slug: string; trustLevel?: 'trusted' | 'sandboxed' }) =>
+  install: (data: { manifest: object; trustLevel?: 'verified' | 'sandboxed' }) =>
     apiClient.post<PluginInstallation>('/plugins/install', data),
 
   uninstall: (slug: string) =>
     apiClient.delete<void>(`/plugins/${slug}`),
 
   enable: (slug: string) =>
-    apiClient.post<PluginInstallation>(`/plugins/${slug}/enable`, {}),
+    apiClient.patch<PluginInstallation>(`/plugins/${slug}/enable`, {}),
 
   disable: (slug: string) =>
-    apiClient.post<PluginInstallation>(`/plugins/${slug}/disable`, {}),
+    apiClient.patch<PluginInstallation>(`/plugins/${slug}/disable`, {}),
 
   updateConfig: (slug: string, config: Record<string, unknown>) =>
-    apiClient.patch<PluginInstallation>(`/plugins/${slug}/config`, { config }),
+    apiClient.put<PluginInstallation>(`/plugins/${slug}/config`, { config }),
 };

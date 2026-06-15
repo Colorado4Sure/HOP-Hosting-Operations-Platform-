@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
@@ -19,6 +19,15 @@ export class NotificationsController {
     return this.notificationsService.getTemplates();
   }
 
+  @ApiOperation({ summary: 'Create an email template' })
+  @Permissions('settings:update')
+  @Post('templates')
+  createTemplate(
+    @Body() body: { name: string; slug: string; subject: string; bodyHtml: string; bodyText?: string; variables?: string[] },
+  ) {
+    return this.notificationsService.createTemplate(body);
+  }
+
   @ApiOperation({ summary: 'Update an email template' })
   @Permissions('settings:update')
   @Put('templates/:id')
@@ -27,6 +36,13 @@ export class NotificationsController {
     @Body() body: { subject?: string; bodyHtml?: string; bodyText?: string },
   ) {
     return this.notificationsService.updateTemplate(id, body);
+  }
+
+  @ApiOperation({ summary: 'Delete an email template' })
+  @Permissions('settings:update')
+  @Delete('templates/:id')
+  deleteTemplate(@Param('id') id: string) {
+    return this.notificationsService.deleteTemplate(id);
   }
 
   @ApiOperation({ summary: 'List notification logs' })

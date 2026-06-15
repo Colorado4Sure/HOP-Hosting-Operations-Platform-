@@ -341,4 +341,100 @@ export class AuthService {
     const map: Record<string, number> = { s: 1000, m: 60000, h: 3600000, d: 86400000 };
     return value * (map[unit] ?? 1000);
   }
+
+  // ─── Admin: User Management ───────────────────────────────────────────────
+
+  async listUsers(params: { page?: number; perPage?: number; search?: string; role?: string }) {
+    const { page = 1, perPage = 25, search, role } = params;
+    const skip = (Number(page) - 1) * Number(perPage);
+
+    const where: any = {
+      ...(role ? { role } : {}),
+      ...(search
+        ? {
+            OR: [
+              { firstName: { contains: search, mode: 'insensitive' } },
+              { lastName: { contains: search, mode: 'insensitive' } },
+              { email: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: Number(perPage),
+        select: {
+          id: true, email: true, firstName: true, lastName: true,
+          role: true, customPermissions: true, isActive: true,
+          isEmailVerified: true, twoFactorEnabled: true,
+          lastLoginAt: true, createdAt: true, updatedAt: true,
+        },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page: Number(page),
+        perPage: Number(perPage),
+        totalPages: Math.ceil(total / Number(perPage)),
+      },
+    };
+  }
+
+  async updateUser(
+    id: string,
+    data: { role?: string; customPermissions?: string[]; isActive?: boolean },
+    actorId: string,
+  ) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: {
+        ...(data.role ? { role: data.role as any } : {}),
+        ...(data.customPermissions !== undefined ? { customPermissions: data.customPermissions } : {}),
+        ...(data.isActive !== undefined ? { isActive: data.isActive } : {}),
+      },
+      select: {
+        id: true, email: true, firstName: true, lastName: true,
+        role: true, customPermissions: true, isActive: true,
+        isEmailVerified: true, createdAt: true, updatedAt: true,
+      },
+    });
+
+    await this.auditService.log({
+      userId: actorId,
+      action: 'update-user',
+      resource: 'user',
+      resourceId: id,
+      metadata: data,
+    });
+
+    return updated;
+  }
+
+  async deleteUser(id: string, actorId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+    if (id === actorId) throw new BadRequestException('Cannot delete your own account');
+
+    await this.prisma.user.delete({ where: { id } });
+
+    await this.auditService.log({
+      userId: actorId,
+      action: 'delete-user',
+      resource: 'user',
+      resourceId: id,
+    });
+
+    return { message: 'User deleted' };
+  }
 }
