@@ -62,7 +62,7 @@ export default function InvoiceDetailPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title={`Invoice #${invoice.number ?? id}`}
+        title={`Invoice #${invoice.invoiceNumber ?? id}`}
         description={`Created ${formatDate(invoice.createdAt)}`}
         action={
           <div className="flex gap-2 flex-wrap">
