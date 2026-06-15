@@ -1,7 +1,7 @@
 {
   "extends": "@hop/tsconfig/nextjs.json",
   "compilerOptions": {
-    "rootDir": ".",
+    "rootDir": "../..",
     "baseUrl": ".",
     "noUnusedLocals": false,
     "noUnusedParameters": false,

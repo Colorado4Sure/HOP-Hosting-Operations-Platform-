@@ -48,11 +48,11 @@ export default function PortalTicketDetailPage() {
   return (
     <div className="max-w-3xl space-y-5">
       <PageHeader
-        title={`[#${ticket.number}] ${ticket.subject}`}
+        title={`[#${ticket.ticketNumber}] ${ticket.subject}`}
         action={
           <div className="flex items-center gap-2">
             <TicketStatusBadge status={ticket.status} />
-            {ticket.status !== "closed" && (
+            {ticket.status !== "Closed" && (
               <Button
                 variant="outline"
                 size="sm"
@@ -84,7 +84,7 @@ export default function PortalTicketDetailPage() {
           ))}
       </div>
 
-      {ticket.status !== "closed" && (
+      {ticket.status !== "Closed" && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Add Reply</CardTitle>

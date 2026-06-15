@@ -24,7 +24,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setUser, setTokens } = useAuthStore();
+  const { setAuth } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,11 +44,9 @@ export default function LoginPage() {
         return;
       }
 
-      setTokens({
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-      });
-      if (response.user) setUser(response.user);
+      if (response.user) {
+        setAuth(response.user, response.tokens);
+      }
 
       router.push("/dashboard");
     } catch (err: unknown) {

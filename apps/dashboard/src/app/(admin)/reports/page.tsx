@@ -35,17 +35,17 @@ export default function AdminReportsPage() {
 
   const { data: summary } = useQuery({
     queryKey: ['reports-summary', period],
-    queryFn: () => reportsApi.getSummary({ days: Number(period) }),
+    queryFn: () => reportsApi.getOverview(),
   });
 
   const { data: mrr } = useQuery({
     queryKey: ['reports-mrr'],
-    queryFn: () => reportsApi.getMrr(),
+    queryFn: () => reportsApi.getMrrReport(),
   });
 
   const { data: overdue } = useQuery({
     queryKey: ['reports-overdue'],
-    queryFn: () => reportsApi.getOverdueInvoices(),
+    queryFn: () => reportsApi.getOverdueReport(),
   });
 
   const stats = (summary as any) ?? {};
@@ -87,7 +87,7 @@ export default function AdminReportsPage() {
         />
         <StatCard
           title="MRR"
-          value={`$${((mrr as any)?.mrr ?? 0).toLocaleString()}`}
+          value={`$${((mrr as any)?.current ?? 0).toLocaleString()}`}
           sub="Monthly Recurring Revenue"
           icon={TrendingUp}
           color="bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400"
@@ -101,7 +101,7 @@ export default function AdminReportsPage() {
         />
         <StatCard
           title="Overdue Invoices"
-          value={String((overdue as any)?.length ?? 0)}
+          value={String((overdue as any)?.invoices?.length ?? 0)}
           sub="Require attention"
           icon={AlertTriangle}
           color="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
@@ -142,11 +142,11 @@ export default function AdminReportsPage() {
           <CardTitle>Overdue Invoices</CardTitle>
         </CardHeader>
         <CardContent>
-          {!overdue || (overdue as any[]).length === 0 ? (
+          {!overdue || (overdue as any)?.invoices?.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No overdue invoices 🎉</p>
           ) : (
             <div className="divide-y">
-              {(overdue as any[]).slice(0, 10).map((inv: any) => (
+              {((overdue as any)?.invoices ?? []).slice(0, 10).map((inv: any) => (
                 <div key={inv.id} className="flex items-center justify-between py-3">
                   <div>
                     <p className="font-medium text-sm">{inv.invoiceNumber}</p>

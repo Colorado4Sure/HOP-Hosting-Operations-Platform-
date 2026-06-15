@@ -23,13 +23,13 @@ export default function AdminProductsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-products", search],
-    queryFn: () => productsApi.list({ search, perPage: 50 }),
+    queryFn: () => productsApi.listProducts({ search: search || undefined, limit: 50 }),
   });
 
   const products: any[] = (data as any)?.data ?? [];
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => productsApi.delete(id),
+    mutationFn: (id: string) => productsApi.deleteProduct(id),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["admin-products"] }),
   });

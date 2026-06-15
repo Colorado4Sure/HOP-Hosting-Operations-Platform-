@@ -88,7 +88,7 @@ export default function InvoicesPage() {
 
       <DataTable<Invoice>
         columns={[
-          { header: "Invoice #", key: "number" },
+          { header: "Invoice #", key: "invoiceNumber" },
           { header: "Client", key: "clientId" },
           {
             header: "Amount",

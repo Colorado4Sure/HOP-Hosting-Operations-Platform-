@@ -67,11 +67,11 @@ class ApiClient {
 
   async get<T>(
     path: string,
-    params?: Record<string, string | number | undefined>,
+    options?: { params?: object },
   ): Promise<T> {
     const url = new URL(`${this.baseUrl}${path}`);
-    if (params) {
-      Object.entries(params).forEach(([k, v]) => {
+    if (options?.params) {
+      Object.entries(options.params as Record<string, unknown>).forEach(([k, v]) => {
         if (v !== undefined) url.searchParams.set(k, String(v));
       });
     }

@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: "standalone",
+  // standalone output is required for Docker but fails on Windows (symlink EPERM)
+  // set DOCKER_BUILD=1 in the Dockerfile to enable it
+  output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],
   },

@@ -101,7 +101,7 @@ export default function ClientDetailPage() {
                   <span className="text-muted-foreground">Status</span>
                   <Badge
                     variant={
-                      client.status === "active" ? "success" : "destructive"
+                      client.status === "Active" ? "success" : "destructive"
                     }
                   >
                     {client.status}

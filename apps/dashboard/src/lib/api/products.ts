@@ -27,6 +27,7 @@ export interface Addon {
 export interface ListProductsParams {
   page?: number;
   limit?: number;
+  search?: string;
   groupId?: string;
   status?: string;
 }

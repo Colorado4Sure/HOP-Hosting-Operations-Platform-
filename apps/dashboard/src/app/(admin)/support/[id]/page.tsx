@@ -66,14 +66,14 @@ export default function AdminTicketDetailPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title={`[#${ticket.number}] ${ticket.subject}`}
+        title={`[#${ticket.ticketNumber}] ${ticket.subject}`}
         action={
           <Button
             variant="destructive"
             size="sm"
             onClick={() => closeTicket.mutate()}
             isLoading={closeTicket.isPending}
-            disabled={ticket.status === "closed"}
+            disabled={ticket.status === "Closed"}
           >
             Close Ticket
           </Button>

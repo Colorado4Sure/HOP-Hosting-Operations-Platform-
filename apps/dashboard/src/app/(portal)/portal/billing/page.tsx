@@ -41,7 +41,7 @@ export default function PortalBillingPage() {
         <TabsContent value="invoices" className="mt-4">
           <DataTable<Invoice>
             columns={[
-              { header: "Invoice #", key: "number" },
+              { header: "Invoice #", key: "invoiceNumber" },
               {
                 header: "Amount",
                 key: "total",
@@ -61,7 +61,7 @@ export default function PortalBillingPage() {
                 header: "",
                 key: "id",
                 render: (_, row) =>
-                  row.status !== "paid" && row.status !== "cancelled" ? (
+                row.status !== "Paid" && row.status !== "Cancelled" ? (
                     <Button size="sm" variant="outline" asChild>
                       <a href={`/portal/billing/pay/${row.id}`}>Pay Now</a>
                     </Button>

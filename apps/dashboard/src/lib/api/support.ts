@@ -2,7 +2,7 @@ import { apiClient } from '@/lib/api/client';
 
 export interface Ticket {
   id: string;
-  number: string;
+  ticketNumber: string;
   subject: string;
   status: string;
   priority: string;
@@ -49,6 +49,7 @@ export interface ListTicketsParams {
   departmentId?: string;
   search?: string;
   clientId?: string;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export const supportApi = {
