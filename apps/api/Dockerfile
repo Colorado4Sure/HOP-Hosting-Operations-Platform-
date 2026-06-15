@@ -1,5 +1,5 @@
 # ─── Stage 1: Dependencies ────────────────────────────────────────────────────
-FROM node:20-alpine AS deps
+FROM node:26-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@9.1.0 --activate
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY apps/api/package.json ./apps/api/
 RUN pnpm install --frozen-lockfile
 
 # ─── Stage 2: Build ───────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:26-alpine AS builder
 RUN corepack enable && corepack prepare pnpm@9.1.0 --activate
 WORKDIR /app
 
@@ -35,7 +35,7 @@ RUN pnpm --filter @hop/api build
 RUN cd apps/api && npx tsc -p tsconfig.seed.json --skipLibCheck 2>/dev/null || true
 
 # ─── Stage 3: Production image ────────────────────────────────────────────────
-FROM node:20-alpine AS runner
+FROM node:26-alpine AS runner
 RUN apk add --no-cache dumb-init openssl
 WORKDIR /app
 
