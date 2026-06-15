@@ -7,8 +7,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// To use MySQL or SQLite: change provider to "mysql" or "sqlite" and re-run `prisma generate`
 datasource db {
-  provider = env("DATABASE_PROVIDER")
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

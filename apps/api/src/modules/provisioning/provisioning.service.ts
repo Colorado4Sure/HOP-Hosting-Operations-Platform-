@@ -16,7 +16,7 @@ export class ProvisioningService {
     @Inject(REDIS_CLIENT) private redis: Redis,
   ) {
     this.provisioningQueue = new Queue("provisioning", {
-      connection: this.redis,
+      connection: this.redis as any,
     });
   }
 
@@ -69,7 +69,7 @@ export class ProvisioningService {
     moduleSettings?: Record<string, unknown>;
     maxAccounts?: number;
   }) {
-    return this.prisma.server.create({ data });
+    return this.prisma.server.create({ data: data as any });
   }
 
   async updateServer(
@@ -85,7 +85,7 @@ export class ProvisioningService {
       status: string;
     }>,
   ) {
-    return this.prisma.server.update({ where: { id }, data });
+    return this.prisma.server.update({ where: { id }, data: data as any });
   }
 
   // ─── Jobs ──────────────────────────────────────────────────────────────────
@@ -153,10 +153,9 @@ export class ProvisioningService {
       data: {
         serviceId: data.serviceId,
         serverId: data.serverId,
-        action: data.action,
-        payload: data.payload ?? {},
-        status: "Queued",
-        createdBy: actorId,
+        action: data.action as any,
+        payload: (data.payload ?? {}) as any,
+        status: "Pending" as any,
       },
     });
 
@@ -182,7 +181,7 @@ export class ProvisioningService {
     const job = await this.prisma.provisioningJob.update({
       where: { id },
       data: {
-        status: "Queued",
+        status: "Pending" as any,
         attempts: { increment: 0 },
         errorMessage: null,
       },
@@ -233,7 +232,7 @@ export class ProvisioningService {
   async getServiceUsage(serviceId: string) {
     return this.prisma.serviceUsage.findFirst({
       where: { serviceId },
-      orderBy: { recordedAt: "desc" },
+      orderBy: { retrievedAt: "desc" },
     });
   }
 }

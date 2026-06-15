@@ -82,11 +82,13 @@ async function main() {
   ];
 
   for (const dept of departments) {
-    await prisma.department.upsert({
-      where: { name: dept.name } as any,
-      update: {},
-      create: dept,
+    const existingDepartment = await prisma.department.findFirst({
+      where: { name: dept.name },
     });
+
+    if (!existingDepartment) {
+      await prisma.department.create({ data: dept });
+    }
   }
 
   console.log('✅ Departments seeded');

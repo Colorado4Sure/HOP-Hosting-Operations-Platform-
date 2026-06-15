@@ -22,17 +22,17 @@ export class PaymentService {
   // ─── Gateways ──────────────────────────────────────────────────────────────
 
   async getActiveGateways() {
-    return this.prisma.pluginInstallation.findMany({
-      where: { type: "payment", status: "Active" },
+    const all = await this.prisma.pluginInstallation.findMany({
+      where: { status: "Active" },
       select: {
         id: true,
         slug: true,
-        name: true,
-        version: true,
         status: true,
-        configPublic: true,
+        manifest: true,
+        config: true,
       },
     });
+    return all.filter((p) => (p.manifest as any)?.type === "payment");
   }
 
   // ─── Initiate Payment ──────────────────────────────────────────────────────
@@ -42,9 +42,9 @@ export class PaymentService {
     actorId: string,
   ) {
     const gateway = await this.prisma.pluginInstallation.findFirst({
-      where: { slug: data.gatewaySlug, type: "payment", status: "Active" },
+      where: { slug: data.gatewaySlug, status: "Active" },
     });
-    if (!gateway) {
+    if (!gateway || (gateway.manifest as any)?.type !== "payment") {
       throw new NotFoundException(
         `Payment gateway '${data.gatewaySlug}' is not active`,
       );
@@ -87,9 +87,9 @@ export class PaymentService {
     headers: Record<string, string>,
   ) {
     const gateway = await this.prisma.pluginInstallation.findFirst({
-      where: { slug: gatewaySlug, type: "payment" },
+      where: { slug: gatewaySlug },
     });
-    if (!gateway) {
+    if (!gateway || (gateway.manifest as any)?.type !== "payment") {
       throw new NotFoundException(`Gateway plugin '${gatewaySlug}' not found`);
     }
 

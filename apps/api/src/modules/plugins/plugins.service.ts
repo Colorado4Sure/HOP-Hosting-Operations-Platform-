@@ -25,14 +25,18 @@ export class PluginsService {
 
   async listPlugins(params?: { type?: string; status?: string }) {
     const where: Prisma.PluginInstallationWhereInput = {
-      ...(params?.type ? { type: params.type } : {}),
       ...(params?.status ? { status: params.status as any } : {}),
     };
 
-    return this.prisma.pluginInstallation.findMany({
+    const all = await this.prisma.pluginInstallation.findMany({
       where,
       orderBy: { installedAt: 'desc' },
     });
+
+    if (params?.type) {
+      return all.filter((p) => (p.manifest as any)?.type === params.type);
+    }
+    return all;
   }
 
   async getPlugin(slug: string) {
@@ -61,14 +65,9 @@ export class PluginsService {
     const plugin = await this.prisma.pluginInstallation.create({
       data: {
         slug: m['slug'],
-        name: m['name'],
-        version: m['version'],
-        type: m['type'],
         status: 'Inactive',
-        trustLevel,
+        trustLevel: trustLevel as any,
         manifest: manifest as any,
-        installedAt: new Date(),
-        installedBy: actorId,
       },
     });
 
@@ -77,7 +76,7 @@ export class PluginsService {
       action: 'install',
       resource: 'plugin',
       resourceId: plugin.slug,
-      metadata: { slug: plugin.slug, version: plugin.version },
+      metadata: { slug: plugin.slug },
     });
 
     return plugin;
@@ -88,7 +87,7 @@ export class PluginsService {
 
     const updated = await this.prisma.pluginInstallation.update({
       where: { slug },
-      data: { configPrivate: config as any },
+      data: { config: config as any },
     });
 
     await this.auditService.log({

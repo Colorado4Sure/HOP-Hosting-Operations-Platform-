@@ -218,7 +218,7 @@ export interface RegistrarProvider {
 export abstract class BasePlugin {
   abstract readonly manifest: PluginManifest;
 
-  validateConfig(config: unknown): boolean {
+  validateConfig(_config: unknown): boolean {
     const schema = this.manifest.configSchema;
     if (!schema) return true;
     // Config validation should be implemented by the core with the declared Zod schema

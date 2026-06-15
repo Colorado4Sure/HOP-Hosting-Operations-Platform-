@@ -3,11 +3,28 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@hop/shared-types": ["../../packages/shared-types/src/index.ts"],
-      "@hop/ui/*": ["../../packages/ui/*"]
-    }
+      "@/*": [
+        "./src/*"
+      ],
+      "@hop/shared-types": [
+        "../../packages/shared-types/src/index.ts"
+      ],
+      "@hop/ui/*": [
+        "../../packages/ui/*"
+      ]
+    },
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "isolatedModules": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

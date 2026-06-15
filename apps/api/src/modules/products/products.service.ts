@@ -130,7 +130,7 @@ export class ProductsService {
               },
             }
           : {}),
-      },
+      } as any,
       include: {
         pricing: true,
         configurableOptions: { include: { values: true } },
@@ -154,7 +154,7 @@ export class ProductsService {
       stockLevel: number;
     }>,
   ) {
-    return this.prisma.product.update({ where: { id }, data });
+    return this.prisma.product.update({ where: { id }, data: data as any });
   }
 
   async deleteProduct(id: string) {
@@ -175,7 +175,7 @@ export class ProductsService {
       setupFee?: number;
     },
   ) {
-    return this.prisma.productPricing.create({ data: { ...data, productId } });
+    return this.prisma.productPricing.create({ data: { ...data, productId } as any });
   }
 
   async updatePricing(
@@ -187,7 +187,7 @@ export class ProductsService {
       setupFee: number;
     }>,
   ) {
-    return this.prisma.productPricing.update({ where: { id }, data });
+    return this.prisma.productPricing.update({ where: { id }, data: data as any });
   }
 
   async removePricing(id: string) {
@@ -201,13 +201,13 @@ export class ProductsService {
     const skip = (page - 1) * perPage;
 
     const [data, total] = await Promise.all([
-      this.prisma.addon.findMany({
+      this.prisma.productAddon.findMany({
         include: { pricing: true },
         orderBy: { createdAt: "desc" },
         skip,
         take: perPage,
       }),
-      this.prisma.addon.count(),
+      this.prisma.productAddon.count(),
     ]);
 
     return {
@@ -231,7 +231,7 @@ export class ProductsService {
     pricing?: any[];
   }) {
     const { pricing, ...addonData } = data;
-    return this.prisma.addon.create({
+    return this.prisma.productAddon.create({
       data: {
         ...addonData,
         ...(pricing ? { pricing: { create: pricing } } : {}),

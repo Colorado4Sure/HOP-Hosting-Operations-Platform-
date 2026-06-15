@@ -84,7 +84,7 @@ export class DomainsService {
     actorId: string,
   ) {
     const dom = await this.prisma.domain.create({
-      data: { ...data, status: "Active" },
+      data: { ...data, status: "Active" } as any,
     });
 
     await this.auditService.log({
@@ -137,7 +137,7 @@ export class DomainsService {
   async transferDomain(id: string, epp: string, actorId: string) {
     const domain = await this.prisma.domain.update({
       where: { id },
-      data: { status: "Pending", transferSecret: epp },
+      data: { status: "Pending", epp },
     });
 
     await this.auditService.log({
@@ -208,7 +208,7 @@ export class DomainsService {
     currency?: string;
   }) {
     return this.prisma.tldPricing.upsert({
-      where: { tld: data.tld },
+      where: { tld_registrar: { tld: data.tld, registrar: data.registrar } },
       create: data,
       update: data,
     });

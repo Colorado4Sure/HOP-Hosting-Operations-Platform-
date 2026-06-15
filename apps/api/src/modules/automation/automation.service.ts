@@ -37,12 +37,12 @@ export class AutomationService {
 
     const [data, total] = await Promise.all([
       this.prisma.jobRunLog.findMany({
-        where: { slug },
+        where: { jobSlug: slug },
         orderBy: { startedAt: 'desc' },
         skip,
         take: perPage,
       }),
-      this.prisma.jobRunLog.count({ where: { slug } }),
+      this.prisma.jobRunLog.count({ where: { jobSlug: slug } }),
     ]);
 
     return {
@@ -68,7 +68,7 @@ export class AutomationService {
     });
 
     const log = await this.prisma.jobRunLog.create({
-      data: { slug, startedAt: new Date(), triggeredBy: actorId, status: 'Running' },
+      data: { jobSlug: slug, startedAt: new Date(), status: 'Running' },
     });
 
     let result: string;
@@ -103,7 +103,7 @@ export class AutomationService {
     await Promise.all([
       this.prisma.jobRunLog.update({
         where: { id: log.id },
-        data: { finishedAt: new Date(), status, output: result },
+        data: { completedAt: new Date(), status, output: result },
       }),
       this.prisma.automationJob.update({
         where: { slug },
@@ -119,7 +119,7 @@ export class AutomationService {
       metadata: { status, output: result },
     });
 
-    return { slug, status, output: result, finishedAt: new Date() };
+    return { slug, status, output: result, completedAt: new Date() };
   }
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
@@ -245,7 +245,7 @@ export class AutomationService {
             first_name: domain.client.firstName,
             domain: domain.domain,
             expiry_date: domain.expiryDate.toLocaleDateString(),
-            days_remaining: days,
+            days_remaining: String(days),
           });
           sent++;
         } catch (err) {

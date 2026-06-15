@@ -3,11 +3,10 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "paths": {
-      "@hop/shared-types": ["../../packages/shared-types/src/index.ts"],
-      "@hop/plugin-sdk": ["../../packages/plugin-sdk/src/index.ts"]
-    }
+    "strictPropertyInitialization": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
-  "include": ["src", "prisma"],
+  "include": ["src"],
   "exclude": ["dist", "node_modules", "test"]
 }

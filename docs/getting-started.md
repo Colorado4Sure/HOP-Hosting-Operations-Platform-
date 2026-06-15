@@ -138,6 +138,215 @@ pnpm dev
 
 ---
 
+## Available Routes
+
+### Dashboard Routes (`http://localhost:3000`)
+
+**Auth**
+- `/login`
+- `/register`
+- `/forgot-password`
+- `/reset-password`
+
+**Admin**
+- `/dashboard`
+- `/clients`
+- `/clients/[id]`
+- `/products`
+- `/domains`
+- `/support`
+- `/support/[id]`
+- `/billing/invoices`
+- `/billing/invoices/[id]`
+- `/provisioning`
+- `/plugins`
+- `/automation`
+- `/reports`
+- `/settings`
+
+**Client Portal**
+- `/portal/dashboard`
+- `/portal/billing`
+- `/portal/services`
+- `/portal/support`
+- `/portal/support/new`
+- `/portal/support/[id]`
+- `/portal/profile`
+
+### API Routes (`http://localhost:3001/api/v1`)
+
+OpenAPI/Swagger: `http://localhost:3001/api/docs`
+
+**Auth (`/auth`)**
+- `POST /register`
+- `POST /login`
+- `POST /refresh`
+- `POST /logout`
+- `GET /me`
+- `GET /verify-email/:token`
+- `POST /forgot-password`
+- `POST /reset-password`
+- `PATCH /change-password`
+- `POST /2fa/setup`
+- `POST /2fa/verify`
+- `POST /2fa/disable`
+
+**Health (`/health`)**
+- `GET /`
+- `GET /db`
+- `GET /queue`
+
+**Clients (`/clients`)**
+- `GET /`
+- `GET /:id`
+- `POST /`
+- `PUT /:id`
+- `PATCH /:id/suspend`
+- `PATCH /:id/activate`
+- `POST /:id/notes`
+- `GET /:id/activity`
+- `PATCH /:id/credit`
+- `GET /groups/all`
+- `POST /groups`
+
+**Billing (`/billing`)**
+- `GET /invoices`
+- `GET /invoices/:id`
+- `POST /invoices`
+- `POST /invoices/:id/send`
+- `POST /invoices/:id/payment`
+- `PATCH /invoices/:id/cancel`
+- `GET /transactions`
+- `POST /credit-notes`
+- `GET /tax-rules`
+- `POST /tax-rules`
+- `PUT /tax-rules/:id`
+
+**Products (`/products`)**
+- `GET /groups`
+- `POST /groups`
+- `PUT /groups/:id`
+- `GET /addons`
+- `POST /addons`
+- `POST /:id/pricing`
+- `PUT /pricing/:id`
+- `DELETE /pricing/:id`
+- `GET /`
+- `POST /`
+- `GET /:id`
+- `PUT /:id`
+- `DELETE /:id`
+
+**Services (`/services`)**
+- `GET /`
+- `POST /`
+- `GET /:id`
+- `PUT /:id`
+- `PATCH /:id/suspend`
+- `PATCH /:id/unsuspend`
+- `PATCH /:id/terminate`
+- `PATCH /:id/cancel`
+- `PATCH /:id/upgrade`
+- `GET /:id/usage`
+
+**Domains (`/domains`)**
+- `GET /`
+- `POST /`
+- `GET /tld-pricing`
+- `POST /tld-pricing`
+- `GET /:id`
+- `PUT /:id`
+- `POST /:id/renew`
+- `POST /:id/transfer`
+- `PATCH /:id/nameservers`
+- `PATCH /:id/auto-renew`
+
+**Support (`/support`)**
+- `GET /tickets`
+- `POST /tickets`
+- `GET /tickets/:id`
+- `POST /tickets/:id/replies`
+- `PATCH /tickets/:id/status`
+- `PATCH /tickets/:id/assign`
+- `PATCH /tickets/:id/close`
+- `GET /departments`
+- `POST /departments`
+- `PUT /departments/:id`
+- `GET /kb/categories`
+- `POST /kb/categories`
+- `GET /kb/articles`
+- `POST /kb/articles`
+- `PUT /kb/articles/:id`
+- `GET /canned-responses`
+- `POST /canned-responses`
+
+**Payment (`/payment`)**
+- `GET /gateways`
+- `POST /initiate`
+- `POST /webhook/:gatewaySlug`
+- `GET /transactions`
+
+**Provisioning (`/provisioning`)**
+- `GET /servers`
+- `POST /servers`
+- `GET /servers/:id`
+- `PUT /servers/:id`
+- `GET /jobs`
+- `POST /jobs`
+- `GET /jobs/:id`
+- `PATCH /jobs/:id/retry`
+- `PATCH /jobs/:id/cancel`
+
+**Automation (`/automation`)**
+- `GET /jobs`
+- `PUT /jobs/:slug`
+- `GET /jobs/:slug/logs`
+- `POST /jobs/:slug/run`
+
+**Notifications (`/notifications`)**
+- `GET /templates`
+- `PUT /templates/:id`
+- `GET /logs`
+
+**Plugins (`/plugins`)**
+- `GET /`
+- `POST /install`
+- `GET /:slug`
+- `PUT /:slug/config`
+- `PATCH /:slug/enable`
+- `PATCH /:slug/disable`
+- `DELETE /:slug`
+
+**Reports (`/reports`)**
+- `GET /overview`
+- `GET /revenue`
+- `GET /clients`
+- `GET /services`
+- `GET /overdue`
+- `GET /mrr`
+
+**Settings (`/settings`)**
+- `GET /`
+- `PUT /`
+- `GET /roles`
+- `POST /roles`
+- `PUT /roles/:id`
+- `GET /audit-logs`
+
+**Affiliates (`/affiliates`)**
+- `GET /`
+- `POST /`
+- `GET /discount-codes`
+- `POST /discount-codes`
+- `PUT /discount-codes/:id`
+- `POST /discount-codes/validate`
+- `GET /:id`
+- `PUT /:id`
+- `PATCH /:id/approve`
+- `GET /:id/referrals`
+
+---
+
 ## Environment Variables Reference
 
 All variables are validated at boot time — the application will fail fast with a clear error if a required variable is missing.

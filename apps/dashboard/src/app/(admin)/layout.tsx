@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Menu, Bell, LogOut, User, KeyRound } from 'lucide-react';
@@ -26,10 +26,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user, clearAuth, tokens } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  if (!user) {
-    router.replace('/login');
-    return null;
-  }
+  useEffect(() => {
+    if (!user) {
+      router.replace('/login');
+    }
+  }, [user, router]);
+
+  if (!user) return null;
 
   async function handleLogout() {
     try {

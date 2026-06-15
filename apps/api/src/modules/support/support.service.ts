@@ -237,7 +237,7 @@ export class SupportService {
   // ─── Departments ───────────────────────────────────────────────────────────
 
   async listDepartments() {
-    return this.prisma.ticketDepartment.findMany({ orderBy: { name: "asc" } });
+    return this.prisma.department.findMany({ orderBy: { name: "asc" } });
   }
 
   async createDepartment(data: {
@@ -247,17 +247,17 @@ export class SupportService {
     isHidden?: boolean;
     slaHours?: number;
   }) {
-    return this.prisma.ticketDepartment.create({ data });
+    return this.prisma.department.create({ data });
   }
 
   async updateDepartment(id: string, data: any) {
-    return this.prisma.ticketDepartment.update({ where: { id }, data });
+    return this.prisma.department.update({ where: { id }, data });
   }
 
   // ─── Knowledge Base ────────────────────────────────────────────────────────
 
   async listKbCategories() {
-    return this.prisma.kbCategory.findMany({
+    return this.prisma.knowledgebaseCategory.findMany({
       where: { parentId: null },
       include: { children: true },
       orderBy: { sortOrder: "asc" },
@@ -270,7 +270,7 @@ export class SupportService {
     parentId?: string;
     sortOrder?: number;
   }) {
-    return this.prisma.kbCategory.create({ data });
+    return this.prisma.knowledgebaseCategory.create({ data });
   }
 
   async listKbArticles(params: {
@@ -280,7 +280,7 @@ export class SupportService {
   }) {
     const { categoryId, search, status } = params;
 
-    const where: Prisma.KbArticleWhereInput = {
+    const where: Prisma.KnowledgebaseArticleWhereInput = {
       ...(categoryId ? { categoryId } : {}),
       ...(status ? { status: status as any } : {}),
       ...(search
@@ -288,7 +288,7 @@ export class SupportService {
         : {}),
     };
 
-    return this.prisma.kbArticle.findMany({
+    return this.prisma.knowledgebaseArticle.findMany({
       where,
       orderBy: { createdAt: "desc" },
     });
@@ -301,11 +301,11 @@ export class SupportService {
     status?: string;
     tags?: string[];
   }) {
-    return this.prisma.kbArticle.create({ data: data as any });
+    return this.prisma.knowledgebaseArticle.create({ data: data as any });
   }
 
   async updateKbArticle(id: string, data: any) {
-    return this.prisma.kbArticle.update({ where: { id }, data });
+    return this.prisma.knowledgebaseArticle.update({ where: { id }, data });
   }
 
   // ─── Canned Responses ──────────────────────────────────────────────────────

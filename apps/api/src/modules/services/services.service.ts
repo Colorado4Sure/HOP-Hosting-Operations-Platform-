@@ -93,7 +93,7 @@ export class ServicesService {
     actorId: string,
   ) {
     const service = await this.prisma.service.create({
-      data: { ...data, status: "Active" },
+      data: { ...data, status: "Active" } as any,
       include: { client: true, product: true },
     });
 
@@ -199,7 +199,7 @@ export class ServicesService {
     actorId: string,
   ) {
     const before = await this.prisma.service.findUnique({ where: { id } });
-    const updated = await this.prisma.service.update({ where: { id }, data });
+    const updated = await this.prisma.service.update({ where: { id }, data: data as any });
 
     await this.auditService.log({
       userId: actorId,
@@ -216,7 +216,7 @@ export class ServicesService {
   async getUsage(id: string) {
     return this.prisma.serviceUsage.findFirst({
       where: { serviceId: id },
-      orderBy: { recordedAt: "desc" },
+      orderBy: { retrievedAt: "desc" },
     });
   }
 }

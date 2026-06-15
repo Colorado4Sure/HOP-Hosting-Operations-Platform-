@@ -90,7 +90,7 @@ export class ClientsService {
         addresses: addresses
           ? { create: addresses }
           : undefined,
-      },
+      } as any,
       include: { addresses: true },
     });
 

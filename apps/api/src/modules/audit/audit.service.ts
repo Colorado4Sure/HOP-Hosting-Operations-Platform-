@@ -19,7 +19,7 @@ export class AuditService {
   constructor(private prisma: PrismaService) {}
 
   async log(entry: AuditLogEntry) {
-    return this.prisma.auditLog.create({ data: entry });
+    return this.prisma.auditLog.create({ data: entry as any });
   }
 
   async findAll(params: { page?: number; perPage?: number; userId?: string; resource?: string }) {

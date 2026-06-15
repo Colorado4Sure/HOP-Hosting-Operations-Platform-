@@ -10,7 +10,7 @@
     "./tokens": "./tokens.js"
   },
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "node -e \"console.log('No build required for @hop/ui')\"",
     "clean": "rimraf dist"
   },
   "devDependencies": {

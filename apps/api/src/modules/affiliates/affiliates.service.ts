@@ -100,7 +100,7 @@ export class AffiliatesService {
   async approveAffiliate(id: string, actorId: string) {
     const affiliate = await this.prisma.affiliate.update({
       where: { id },
-      data: { status: "Active", approvedAt: new Date() },
+      data: { status: "Active" },
     });
 
     await this.auditService.log({
@@ -121,13 +121,13 @@ export class AffiliatesService {
     const skip = (page - 1) * perPage;
 
     const [data, total] = await Promise.all([
-      this.prisma.affiliateReferral.findMany({
+      this.prisma.referral.findMany({
         where: { affiliateId },
         orderBy: { createdAt: "desc" },
         skip,
         take: perPage,
       }),
-      this.prisma.affiliateReferral.count({ where: { affiliateId } }),
+      this.prisma.referral.count({ where: { affiliateId } }),
     ]);
 
     return {
