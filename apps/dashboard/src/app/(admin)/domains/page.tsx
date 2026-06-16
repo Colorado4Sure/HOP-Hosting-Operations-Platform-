@@ -65,7 +65,7 @@ export default function AdminDomainsPage() {
 
   const { data: clientsData } = useQuery({
     queryKey: ["clients-select"],
-    queryFn: () => clientsApi.listClients({ limit: 200 }),
+    queryFn: () => clientsApi.listClients({ perPage: 200 }),
     enabled: registerOpen,
   });
 

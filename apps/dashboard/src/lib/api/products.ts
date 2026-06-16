@@ -26,10 +26,31 @@ export interface Addon {
 
 export interface ListProductsParams {
   page?: number;
-  limit?: number;
+  perPage?: number;
   search?: string;
   groupId?: string;
   status?: string;
+}
+
+export interface PaginatedProductsMeta {
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+}
+
+export interface PaginatedProducts {
+  data: Product[];
+  meta: PaginatedProductsMeta;
+}
+
+export interface CreateProductPayload {
+  name: string;
+  description?: string;
+  type?: string;
+  status?: string;
+  groupId?: string;
+  pricing?: { billingCycle: string; currency: string; price: number; setupFee?: number }[];
 }
 
 export const productsApi = {
@@ -39,7 +60,7 @@ export const productsApi = {
 
   listProducts(
     params?: ListProductsParams,
-  ): Promise<{ data: Product[]; total: number }> {
+  ): Promise<PaginatedProducts> {
     return apiClient.get("/products", { params });
   },
 
@@ -47,7 +68,7 @@ export const productsApi = {
     return apiClient.get(`/products/${id}`);
   },
 
-  createProduct(data: Partial<Product>): Promise<Product> {
+  createProduct(data: CreateProductPayload): Promise<Product> {
     return apiClient.post("/products", data);
   },
 

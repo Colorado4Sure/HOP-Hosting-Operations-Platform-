@@ -1,9 +1,18 @@
 import { apiClient } from "@/lib/api/client";
 import type { Invoice, Transaction } from "@hop/shared-types";
 
+export interface PaginatedMeta {
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
 export interface ListInvoicesParams {
   page?: number;
-  limit?: number;
+  perPage?: number;
   status?: string;
   clientId?: string;
   search?: string;
@@ -11,21 +20,17 @@ export interface ListInvoicesParams {
 
 export interface PaginatedInvoices {
   data: Invoice[];
-  total: number;
-  page: number;
-  limit: number;
+  meta: PaginatedMeta;
 }
 
 export interface PaginatedTransactions {
   data: Transaction[];
-  total: number;
-  page: number;
-  limit: number;
+  meta: PaginatedMeta;
 }
 
 export const billingApi = {
   listInvoices(params?: ListInvoicesParams): Promise<PaginatedInvoices> {
-    return apiClient.get("/billing/invoices", { params });
+    return apiClient.get('/billing/invoices', { params });
   },
 
   getInvoice(id: string): Promise<Invoice> {
@@ -53,7 +58,7 @@ export const billingApi = {
 
   listTransactions(params?: {
     page?: number;
-    limit?: number;
+    perPage?: number;
     clientId?: string;
   }): Promise<PaginatedTransactions> {
     return apiClient.get("/billing/transactions", { params });

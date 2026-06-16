@@ -22,8 +22,8 @@ export class PermissionsGuard implements CanActivate {
 
     if (!user) return false;
 
-    // SuperAdmin bypass
-    if (user.role === 'SuperAdmin') return true;
+    // SuperAdmin and Admin bypass all permission checks
+    if (user.role === 'SuperAdmin' || user.role === 'Admin') return true;
 
     const userPermissions = new Set<string>([...(user.permissions ?? [])]);
     const hasAll = requiredPermissions.every((p) => userPermissions.has(p));

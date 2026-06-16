@@ -76,13 +76,13 @@ export default function AdminServicesPage() {
 
   const { data: clientsData } = useQuery({
     queryKey: ["clients-select"],
-    queryFn: () => clientsApi.listClients({ limit: 200 }),
+    queryFn: () => clientsApi.listClients({ perPage: 200 }),
     enabled: open,
   });
 
   const { data: productsData } = useQuery({
     queryKey: ["products-select"],
-    queryFn: () => productsApi.listProducts({ limit: 200 }),
+    queryFn: () => productsApi.listProducts({ perPage: 200 }),
     enabled: open,
   });
 

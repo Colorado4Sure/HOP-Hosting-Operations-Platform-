@@ -27,13 +27,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    if (hasHydrated && !user) {
+    if (!hasHydrated) return;
+    if (!user) {
       router.replace('/login');
+    } else if (user.role === 'Client') {
+      router.replace('/portal/dashboard');
     }
   }, [hasHydrated, user, router]);
 
   if (!hasHydrated) return null;
   if (!user) return null;
+  if (user.role === 'Client') return null;
 
   async function handleLogout() {
     try {

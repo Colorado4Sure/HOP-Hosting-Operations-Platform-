@@ -36,16 +36,19 @@ export default function ClientsPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
 
-  const { data, isLoading } = useQuery({
+  const { data: response, isLoading } = useQuery({
     queryKey: ["clients", page, search, status],
     queryFn: () =>
       clientsApi.listClients({
         page,
-        limit: 20,
+        perPage: 20,
         search: search || undefined,
         status: status !== "all" ? status : undefined,
       }),
   });
+
+  const clients = response?.data ?? [];
+  const total = response?.meta?.total ?? 0;
 
   return (
     <div className="space-y-5">
@@ -87,9 +90,9 @@ export default function ClientsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="suspended">Suspended</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="Active">Active</SelectItem>
+            <SelectItem value="Suspended">Suspended</SelectItem>
+            <SelectItem value="Inactive">Inactive</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -123,15 +126,11 @@ export default function ClientsPage() {
             render: (v) => formatDate(String(v)),
           },
         ]}
-        data={data?.data ?? []}
+        data={clients}
         isLoading={isLoading}
         emptyMessage="No clients found."
         onRowClick={(row) => router.push(`/clients/${row.id}`)}
-        pagination={
-          data
-            ? { page, total: data.total, limit: 20, onPageChange: setPage }
-            : undefined
-        }
+        pagination={{ page, total, limit: 20, onPageChange: setPage }}
       />
     </div>
   );

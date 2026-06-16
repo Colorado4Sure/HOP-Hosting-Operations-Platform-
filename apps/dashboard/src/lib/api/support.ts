@@ -41,9 +41,18 @@ export interface CannedResponse {
   content: string;
 }
 
+export interface PaginatedMeta {
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
 export interface ListTicketsParams {
   page?: number;
-  limit?: number;
+  perPage?: number;
   status?: string;
   priority?: string;
   departmentId?: string;
@@ -53,7 +62,7 @@ export interface ListTicketsParams {
 }
 
 export const supportApi = {
-  listTickets(params?: ListTicketsParams): Promise<{ data: Ticket[]; total: number }> {
+  listTickets(params?: ListTicketsParams): Promise<{ data: Ticket[]; meta: PaginatedMeta }> {
     return apiClient.get('/support/tickets', { params });
   },
 

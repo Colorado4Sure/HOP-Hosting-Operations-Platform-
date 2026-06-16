@@ -12,7 +12,7 @@ import {
   EyeOff,
   Loader2,
 } from "lucide-react";
-import { productsApi } from "@/lib/api/products";
+import { productsApi, type CreateProductPayload } from "@/lib/api/products";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/select";
 
 const PRODUCT_TYPES = ["Shared", "Reseller", "VPS", "Dedicated", "Domain", "SSL", "Other"];
+const BILLING_CYCLES = ["Monthly", "Quarterly", "Semi-Annually", "Annually", "Biennially", "Triennially"];
 
 export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
@@ -45,12 +46,14 @@ export default function AdminProductsPage() {
     description: "",
     type: "Shared",
     status: "Active",
+    basePrice: "",
+    billingCycle: "Monthly",
   });
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-products", search],
-    queryFn: () => productsApi.listProducts({ search: search || undefined, limit: 50 }),
+    queryFn: () => productsApi.listProducts({ search: search || undefined, perPage: 50 }),
   });
 
   const products: any[] = (data as any)?.data ?? [];
@@ -62,11 +65,26 @@ export default function AdminProductsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => productsApi.createProduct(form),
+    mutationFn: () => {
+      const payload: CreateProductPayload = {
+        name: form.name,
+        description: form.description,
+        type: form.type,
+        status: form.status,
+      };
+      if (form.basePrice) {
+        payload.pricing = [{
+          billingCycle: form.billingCycle,
+          currency: "USD",
+          price: parseFloat(form.basePrice),
+        }];
+      }
+      return productsApi.createProduct(payload);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
       setOpen(false);
-      setForm({ name: "", description: "", type: "Shared", status: "Active" });
+      setForm({ name: "", description: "", type: "Shared", status: "Active", basePrice: "", billingCycle: "Monthly" });
       setFormError(null);
     },
     onError: (err: Error) => setFormError(err.message ?? "Failed to create product"),
@@ -258,6 +276,38 @@ export default function AdminProductsPage() {
                     <SelectItem value="Active">Active</SelectItem>
                     <SelectItem value="Inactive">Inactive</SelectItem>
                     <SelectItem value="Hidden">Hidden</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="prod-price">Base Price (USD)</Label>
+                <Input
+                  id="prod-price"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.basePrice}
+                  onChange={(e) => setForm((p) => ({ ...p, basePrice: e.target.value }))}
+                  placeholder="e.g. 9.99"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="prod-cycle">Billing Cycle</Label>
+                <Select
+                  value={form.billingCycle}
+                  onValueChange={(v) => setForm((p) => ({ ...p, billingCycle: v }))}
+                >
+                  <SelectTrigger id="prod-cycle">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BILLING_CYCLES.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

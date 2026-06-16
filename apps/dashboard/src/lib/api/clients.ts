@@ -3,16 +3,23 @@ import type { Client } from '@hop/shared-types';
 
 export interface ListClientsParams {
   page?: number;
-  limit?: number;
+  perPage?: number;
   search?: string;
   status?: string;
 }
 
-export interface PaginatedClients {
-  data: Client[];
+export interface PaginatedClientsMeta {
   total: number;
   page: number;
-  limit: number;
+  perPage: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
+export interface PaginatedClients {
+  data: Client[];
+  meta: PaginatedClientsMeta;
 }
 
 export const clientsApi = {

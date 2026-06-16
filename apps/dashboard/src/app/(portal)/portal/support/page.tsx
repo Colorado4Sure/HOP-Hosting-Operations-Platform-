@@ -24,10 +24,13 @@ export default function PortalSupportPage() {
   const router = useRouter();
   const [page, setPage] = useState(1);
 
-  const { data, isLoading } = useQuery({
+  const { data: response, isLoading } = useQuery({
     queryKey: ["portal-tickets", page],
-    queryFn: () => supportApi.listTickets({ page, limit: 20 }),
+    queryFn: () => supportApi.listTickets({ page, perPage: 20 }),
   });
+
+  const tickets = response?.data ?? [];
+  const total = response?.meta?.total ?? 0;
 
   return (
     <div className="space-y-5">
@@ -68,15 +71,11 @@ export default function PortalSupportPage() {
             render: (v) => formatDate(String(v)),
           },
         ]}
-        data={data?.data ?? []}
+        data={tickets}
         isLoading={isLoading}
         emptyMessage="You have no support tickets."
         onRowClick={(row) => router.push(`/portal/support/${row.id}`)}
-        pagination={
-          data
-            ? { page, total: data.total, limit: 20, onPageChange: setPage }
-            : undefined
-        }
+        pagination={{ page, total, limit: 20, onPageChange: setPage }}
       />
     </div>
   );

@@ -14,18 +14,41 @@ import {
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/auth.store";
 
-const navItems = [
+type NavItem = {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+  /** Required permission string. 'admin-only' means SuperAdmin/Admin/Staff only. */
+  permission?: string;
+};
+
+const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Clients", href: "/clients", icon: Users },
-  { label: "Billing", href: "/billing/invoices", icon: Receipt },
-  { label: "Products", href: "/products", icon: Package },
-  { label: "Services", href: "/services", icon: Server },
-  { label: "Domains", href: "/domains", icon: Globe },
-  { label: "Support", href: "/support", icon: MessageSquare },
-  { label: "Reports", href: "/reports", icon: BarChart },
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Clients", href: "/clients", icon: Users, permission: "clients:read" },
+  { label: "Billing", href: "/billing/invoices", icon: Receipt, permission: "invoices:read" },
+  { label: "Products", href: "/products", icon: Package, permission: "products:read" },
+  { label: "Services", href: "/services", icon: Server, permission: "servers:read" },
+  { label: "Domains", href: "/domains", icon: Globe, permission: "domains:read" },
+  { label: "Support", href: "/support", icon: MessageSquare, permission: "support:read" },
+  { label: "Reports", href: "/reports", icon: BarChart, permission: "reports:read" },
+  { label: "Settings", href: "/settings", icon: Settings, permission: "admin-only" },
 ];
+
+const ADMIN_ROLES = new Set(["SuperAdmin", "Admin"]);
+
+function hasAccess(
+  permission: string | undefined,
+  role: string,
+  customPermissions: string[],
+): boolean {
+  if (!permission) return true; // Dashboard always visible
+  if (ADMIN_ROLES.has(role)) return true; // Admins see everything
+  if (permission === "admin-only") return false;
+  // Staff / Reseller: check custom permissions
+  return customPermissions.includes(permission);
+}
 
 interface AdminSidebarProps {
   onNavigate?: () => void;
@@ -33,6 +56,14 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
   const pathname = usePathname();
+  const { user } = useAuthStore();
+
+  const role = user?.role ?? "";
+  const customPermissions: string[] = (user as any)?.customPermissions ?? [];
+
+  const visibleItems = NAV_ITEMS.filter((item) =>
+    hasAccess(item.permission, role, customPermissions),
+  );
 
   return (
     <aside className="flex h-full w-64 flex-col bg-card border-r">
@@ -47,7 +78,7 @@ export function AdminSidebar({ onNavigate }: AdminSidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-3">
         <ul className="space-y-1">
-          {navItems.map(({ label, href, icon: Icon }) => {
+          {visibleItems.map(({ label, href, icon: Icon }) => {
             const isActive =
               pathname === href || pathname.startsWith(href + "/");
             return (

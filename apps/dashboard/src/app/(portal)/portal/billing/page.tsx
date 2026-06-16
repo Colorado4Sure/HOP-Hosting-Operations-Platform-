@@ -15,15 +15,20 @@ export default function PortalBillingPage() {
   const [invoicePage, setInvoicePage] = useState(1);
   const [txPage, setTxPage] = useState(1);
 
-  const { data: invoices, isLoading: invLoading } = useQuery({
+  const { data: invResponse, isLoading: invLoading } = useQuery({
     queryKey: ["portal-invoices", invoicePage],
-    queryFn: () => billingApi.listInvoices({ page: invoicePage, limit: 20 }),
+    queryFn: () => billingApi.listInvoices({ page: invoicePage, perPage: 20 }),
   });
 
-  const { data: transactions, isLoading: txLoading } = useQuery({
+  const { data: txResponse, isLoading: txLoading } = useQuery({
     queryKey: ["portal-transactions", txPage],
-    queryFn: () => billingApi.listTransactions({ page: txPage, limit: 20 }),
+    queryFn: () => billingApi.listTransactions({ page: txPage, perPage: 20 }),
   });
+
+  const invoices = invResponse?.data ?? [];
+  const invTotal = invResponse?.meta?.total ?? 0;
+  const transactions = txResponse?.data ?? [];
+  const txTotal = txResponse?.meta?.total ?? 0;
 
   return (
     <div className="space-y-5">
@@ -68,19 +73,15 @@ export default function PortalBillingPage() {
                   ) : null,
               },
             ]}
-            data={invoices?.data ?? []}
+            data={invoices}
             isLoading={invLoading}
             emptyMessage="No invoices found."
-            pagination={
-              invoices
-                ? {
+            pagination={{
                     page: invoicePage,
-                    total: invoices.total,
+                    total: invTotal,
                     limit: 20,
                     onPageChange: setInvoicePage,
-                  }
-                : undefined
-            }
+                  }}
           />
         </TabsContent>
 
@@ -100,19 +101,15 @@ export default function PortalBillingPage() {
               },
               { header: "Type", key: "type" },
             ]}
-            data={transactions?.data ?? []}
+            data={transactions}
             isLoading={txLoading}
             emptyMessage="No transactions."
-            pagination={
-              transactions
-                ? {
+            pagination={{
                     page: txPage,
-                    total: transactions.total,
+                    total: txTotal,
                     limit: 20,
                     onPageChange: setTxPage,
-                  }
-                : undefined
-            }
+                  }}
           />
         </TabsContent>
       </Tabs>

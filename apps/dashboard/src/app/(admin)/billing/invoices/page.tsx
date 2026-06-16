@@ -26,16 +26,19 @@ export default function InvoicesPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
 
-  const { data, isLoading } = useQuery({
+  const { data: response, isLoading } = useQuery({
     queryKey: ["invoices", page, search, status],
     queryFn: () =>
       billingApi.listInvoices({
         page,
-        limit: 20,
+        perPage: 20,
         search: search || undefined,
         status: status !== "all" ? status : undefined,
       }),
   });
+
+  const invoices = response?.data ?? [];
+  const total = response?.meta?.total ?? 0;
 
   return (
     <div className="space-y-5">
@@ -111,15 +114,11 @@ export default function InvoicesPage() {
             render: (v) => formatDate(String(v)),
           },
         ]}
-        data={data?.data ?? []}
+        data={invoices}
         isLoading={isLoading}
         emptyMessage="No invoices found."
         onRowClick={(row) => router.push(`/billing/invoices/${row.id}`)}
-        pagination={
-          data
-            ? { page, total: data.total, limit: 20, onPageChange: setPage }
-            : undefined
-        }
+        pagination={{ page, total, limit: 20, onPageChange: setPage }}
       />
     </div>
   );

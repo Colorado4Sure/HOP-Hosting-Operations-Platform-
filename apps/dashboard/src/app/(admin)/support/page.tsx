@@ -34,17 +34,20 @@ export default function AdminSupportPage() {
   const [status, setStatus] = useState("all");
   const [priority, setPriority] = useState("all");
 
-  const { data, isLoading } = useQuery({
+  const { data: response, isLoading } = useQuery({
     queryKey: ["tickets", page, search, status, priority],
     queryFn: () =>
       supportApi.listTickets({
         page,
-        limit: 20,
+        perPage: 20,
         search: search || undefined,
         status: status !== "all" ? status : undefined,
         priority: priority !== "all" ? priority : undefined,
       }),
   });
+
+  const tickets = response?.data ?? [];
+  const total = response?.meta?.total ?? 0;
 
   return (
     <div className="space-y-5">
@@ -129,15 +132,11 @@ export default function AdminSupportPage() {
             render: (v) => formatDate(String(v)),
           },
         ]}
-        data={data?.data ?? []}
+        data={tickets}
         isLoading={isLoading}
         emptyMessage="No tickets found."
         onRowClick={(row) => router.push(`/support/${row.id}`)}
-        pagination={
-          data
-            ? { page, total: data.total, limit: 20, onPageChange: setPage }
-            : undefined
-        }
+        pagination={{ page, total, limit: 20, onPageChange: setPage }}
       />
     </div>
   );
