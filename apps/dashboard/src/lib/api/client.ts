@@ -37,9 +37,13 @@ class ApiClient {
       throw new Error(errorData.message ?? `HTTP ${response.status}`);
     }
 
-    const data = await response.json();
-    // Unwrap the {success, data} envelope
-    return data.data ?? data;
+    const body = await response.json();
+    // Unwrap only when the NestJS ResponseInterceptor envelope {success, data} is present.
+    // If the response is already the final shape (e.g. {data:[], meta:{}}), return it directly.
+    if (body !== null && typeof body === "object" && body.success === true && "data" in body) {
+      return body.data as T;
+    }
+    return body as T;
   }
 
   private async refreshToken(): Promise<boolean> {
