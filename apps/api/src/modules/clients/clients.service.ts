@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+﻿import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CreateClientDto, UpdateClientDto, CreateClientNoteDto, ListClientsDto } from './dto/client.dto';
@@ -14,7 +14,9 @@ export class ClientsService {
   ) {}
 
   async findAll(query: ListClientsDto) {
-    const { page = 1, perPage = 25, search, status, groupId } = query;
+    const { page: _page, perPage: _perPage, search, status, groupId } = query;
+    const page = Math.max(1, parseInt(String(_page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(_perPage ?? 25), 10) || 25);
     const skip = (page - 1) * perPage;
 
     const where: Prisma.ClientWhereInput = {
@@ -166,7 +168,7 @@ export class ClientsService {
   }
 
   async getActivity(clientId: string, page = 1, perPage = 25) {
-    const skip = (page - 1) * perPage;
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
     const [data, total] = await Promise.all([
       this.prisma.clientActivity.findMany({
         where: { clientId },

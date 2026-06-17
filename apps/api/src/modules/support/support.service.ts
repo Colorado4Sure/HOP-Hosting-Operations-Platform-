@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+﻿import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -14,7 +14,7 @@ export class SupportService {
     private notificationsService: NotificationsService,
   ) {}
 
-  // ─── Tickets ───────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Tickets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async listTickets(params: {
     page?: number;
@@ -36,7 +36,7 @@ export class SupportService {
       assignedToId,
       search,
     } = params;
-    const skip = (page - 1) * perPage;
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
 
     const where: Prisma.TicketWhereInput = {
       ...(clientId ? { clientId } : {}),
@@ -234,7 +234,7 @@ export class SupportService {
     return ticket;
   }
 
-  // ─── Departments ───────────────────────────────────────────────────────────
+  // â”€â”€â”€ Departments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async listDepartments() {
     return this.prisma.department.findMany({ orderBy: { name: "asc" } });
@@ -254,7 +254,7 @@ export class SupportService {
     return this.prisma.department.update({ where: { id }, data });
   }
 
-  // ─── Knowledge Base ────────────────────────────────────────────────────────
+  // â”€â”€â”€ Knowledge Base â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async listKbCategories() {
     return this.prisma.knowledgebaseCategory.findMany({
@@ -308,7 +308,7 @@ export class SupportService {
     return this.prisma.knowledgebaseArticle.update({ where: { id }, data });
   }
 
-  // ─── Canned Responses ──────────────────────────────────────────────────────
+  // â”€â”€â”€ Canned Responses â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async listCannedResponses(departmentId?: string) {
     return this.prisma.cannedResponse.findMany({

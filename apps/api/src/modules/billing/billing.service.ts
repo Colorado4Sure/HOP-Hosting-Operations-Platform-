@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+﻿import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -13,10 +13,12 @@ export class BillingService {
     private notificationsService: NotificationsService,
   ) {}
 
-  // ─── Invoices ─────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Invoices â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async listInvoices(params: { page?: number; perPage?: number; clientId?: string; status?: string; search?: string }) {
-    const { page = 1, perPage = 25, clientId, status, search } = params;
-    const skip = (page - 1) * perPage;
+    const { page: _page, perPage: _perPage, clientId, status, search } = params;
+    const page = Math.max(1, parseInt(String(_page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(_perPage ?? 25), 10) || 25);
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
 
     const where: Prisma.InvoiceWhereInput = {
       ...(clientId ? { clientId } : {}),
@@ -175,10 +177,12 @@ export class BillingService {
     return invoice;
   }
 
-  // ─── Transactions ──────────────────────────────────────────────────────────
+  // â”€â”€â”€ Transactions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async listTransactions(params: { page?: number; perPage?: number; clientId?: string }) {
-    const { page = 1, perPage = 25, clientId } = params;
-    const skip = (page - 1) * perPage;
+    const { page: _page, perPage: _perPage, clientId } = params;
+    const page = Math.max(1, parseInt(String(_page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(_perPage ?? 25), 10) || 25);
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
     const where = clientId ? { clientId } : {};
 
     const [data, total] = await Promise.all([
@@ -189,7 +193,7 @@ export class BillingService {
     return { data, meta: { total, page, perPage, totalPages: Math.ceil(total / perPage), hasPreviousPage: page > 1, hasNextPage: page < Math.ceil(total / perPage) } };
   }
 
-  // ─── Credit Notes ──────────────────────────────────────────────────────────
+  // â”€â”€â”€ Credit Notes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async createCreditNote(data: { clientId: string; invoiceId?: string; amount: number; currency: string; reason: string }, actorId: string) {
     const count = await this.prisma.creditNote.count();
     const creditNoteNumber = `CN-${String(count + 1).padStart(6, '0')}`;
@@ -202,7 +206,7 @@ export class BillingService {
     return creditNote;
   }
 
-  // ─── Tax Rules ─────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Tax Rules â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async getTaxRules() {
     return this.prisma.taxRule.findMany({ orderBy: { name: 'asc' } });
   }

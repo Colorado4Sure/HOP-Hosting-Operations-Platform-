@@ -1,4 +1,4 @@
-import {
+﻿import {
   Injectable,
   NotFoundException,
   BadRequestException,
@@ -15,15 +15,17 @@ export class AffiliatesService {
     private auditService: AuditService,
   ) {}
 
-  // ─── Affiliates ────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Affiliates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async listAffiliates(params: {
     page?: number;
     perPage?: number;
     status?: string;
   }) {
-    const { page = 1, perPage = 25, status } = params;
-    const skip = (page - 1) * perPage;
+    const { page: _page, perPage: _perPage, status } = params;
+    const page = Math.max(1, parseInt(String(_page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(_perPage ?? 25), 10) || 25);
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
 
     const where: Prisma.AffiliateWhereInput = status
       ? { status: status as any }
@@ -117,8 +119,10 @@ export class AffiliatesService {
     affiliateId: string,
     params: { page?: number; perPage?: number },
   ) {
-    const { page = 1, perPage = 25 } = params;
-    const skip = (page - 1) * perPage;
+    const { page: _page, perPage: _perPage } = params;
+    const page = Math.max(1, parseInt(String(_page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(_perPage ?? 25), 10) || 25);
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
 
     const [data, total] = await Promise.all([
       this.prisma.referral.findMany({
@@ -143,15 +147,17 @@ export class AffiliatesService {
     };
   }
 
-  // ─── Discount Codes ────────────────────────────────────────────────────────
+  // â”€â”€â”€ Discount Codes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async listDiscountCodes(params: {
     page?: number;
     perPage?: number;
     search?: string;
   }) {
-    const { page = 1, perPage = 25, search } = params;
-    const skip = (page - 1) * perPage;
+    const { page: _page, perPage: _perPage, search } = params;
+    const page = Math.max(1, parseInt(String(_page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(_perPage ?? 25), 10) || 25);
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
 
     const where: Prisma.DiscountCodeWhereInput = search
       ? { code: { contains: search, mode: "insensitive" } }

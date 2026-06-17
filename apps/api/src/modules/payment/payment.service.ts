@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+﻿import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { Prisma } from "@prisma/client";
 
@@ -19,7 +19,7 @@ import { Prisma } from "@prisma/client";
 export class PaymentService {
   constructor(private prisma: PrismaService) {}
 
-  // ─── Gateways ──────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Gateways â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async getActiveGateways() {
     const all = await this.prisma.pluginInstallation.findMany({
@@ -35,7 +35,7 @@ export class PaymentService {
     return all.filter((p) => (p.manifest as any)?.type === "payment");
   }
 
-  // ─── Initiate Payment ──────────────────────────────────────────────────────
+  // â”€â”€â”€ Initiate Payment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async initiatePayment(
     data: { gatewaySlug: string; invoiceId: string; clientId: string },
@@ -79,7 +79,7 @@ export class PaymentService {
     };
   }
 
-  // ─── Webhook Processing ────────────────────────────────────────────────────
+  // â”€â”€â”€ Webhook Processing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async processWebhook(
     gatewaySlug: string,
@@ -109,14 +109,16 @@ export class PaymentService {
     };
   }
 
-  // ─── Transactions ──────────────────────────────────────────────────────────
+  // â”€â”€â”€ Transactions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async getTransactionsByGateway(
     gatewaySlug: string,
     params: { page?: number; perPage?: number },
   ) {
-    const { page = 1, perPage = 25 } = params;
-    const skip = (page - 1) * perPage;
+    const { page: _page, perPage: _perPage } = params;
+    const page = Math.max(1, parseInt(String(_page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(_perPage ?? 25), 10) || 25);
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
 
     const where: Prisma.TransactionWhereInput = { gateway: gatewaySlug };
 
@@ -147,8 +149,10 @@ export class PaymentService {
   }
 
   async getAllTransactions(params: { page?: number; perPage?: number }) {
-    const { page = 1, perPage = 25 } = params;
-    const skip = (page - 1) * perPage;
+    const { page: _page, perPage: _perPage } = params;
+    const page = Math.max(1, parseInt(String(_page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(_perPage ?? 25), 10) || 25);
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
 
     const [data, total] = await Promise.all([
       this.prisma.transaction.findMany({

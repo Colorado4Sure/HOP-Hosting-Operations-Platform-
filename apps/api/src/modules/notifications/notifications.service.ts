@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+﻿import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import * as nodemailer from "nodemailer";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -58,7 +58,7 @@ export class NotificationsService {
 
     if (!this.transporter) {
       this.logger.warn(
-        `SMTP not configured — skipping email to ${recipient} (${templateSlug})`,
+        `SMTP not configured â€” skipping email to ${recipient} (${templateSlug})`,
       );
       await this.prisma.notificationLog.update({
         where: { id: logEntry.id },
@@ -124,8 +124,10 @@ export class NotificationsService {
   }
 
   async getLogs(params: { page?: number; perPage?: number; status?: string }) {
-    const { page = 1, perPage = 25, status } = params;
-    const skip = (page - 1) * perPage;
+    const { page: _page, perPage: _perPage, status } = params;
+    const page = Math.max(1, parseInt(String(_page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(_perPage ?? 25), 10) || 25);
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
     const where = status ? { status } : {};
 
     const [data, total] = await Promise.all([

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+﻿import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import { Prisma } from "@prisma/client";
@@ -10,7 +10,7 @@ export class DomainsService {
     private auditService: AuditService,
   ) {}
 
-  // ─── Domains ───────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Domains â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async listDomains(params: {
     page?: number;
@@ -19,8 +19,10 @@ export class DomainsService {
     status?: string;
     search?: string;
   }) {
-    const { page = 1, perPage = 25, clientId, status, search } = params;
-    const skip = (page - 1) * perPage;
+    const { page: _page, perPage: _perPage, clientId, status, search } = params;
+    const page = Math.max(1, parseInt(String(_page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(_perPage ?? 25), 10) || 25);
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
 
     const where: Prisma.DomainWhereInput = {
       ...(clientId ? { clientId } : {}),
@@ -187,7 +189,7 @@ export class DomainsService {
     return updated;
   }
 
-  // ─── TLD Pricing ───────────────────────────────────────────────────────────
+  // â”€â”€â”€ TLD Pricing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async listTldPricing(params: { search?: string }) {
     const { search } = params;
@@ -214,7 +216,7 @@ export class DomainsService {
     });
   }
 
-  // ─── Expiry Checks ─────────────────────────────────────────────────────────
+  // â”€â”€â”€ Expiry Checks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async getExpiringDomains(daysAhead: number) {
     const future = new Date();

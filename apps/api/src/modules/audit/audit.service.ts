@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 export interface AuditLogEntry {
@@ -23,8 +23,10 @@ export class AuditService {
   }
 
   async findAll(params: { page?: number; perPage?: number; userId?: string; resource?: string }) {
-    const { page = 1, perPage = 25, userId, resource } = params;
-    const skip = (page - 1) * perPage;
+    const { page: _page, perPage: _perPage, userId, resource } = params;
+    const page = Math.max(1, parseInt(String(_page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(_perPage ?? 25), 10) || 25);
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
 
     const where = {
       ...(userId ? { userId } : {}),

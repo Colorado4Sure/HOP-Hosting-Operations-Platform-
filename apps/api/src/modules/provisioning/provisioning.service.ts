@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Inject } from "@nestjs/common";
+﻿import { Injectable, NotFoundException, Inject } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import { REDIS_CLIENT } from "../../redis/redis.module";
@@ -20,15 +20,17 @@ export class ProvisioningService {
     });
   }
 
-  // ─── Servers ───────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Servers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async listServers(params?: {
     page?: number;
     perPage?: number;
     type?: string;
   }) {
-    const { page = 1, perPage = 25, type } = params ?? {};
-    const skip = (page - 1) * perPage;
+    const { page: _page, perPage: _perPage, type } = params ?? {};
+    const page = Math.max(1, parseInt(String(_page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(_perPage ?? 25), 10) || 25);
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
     const where = type ? { type } : {};
 
     const [data, total] = await Promise.all([
@@ -88,7 +90,7 @@ export class ProvisioningService {
     return this.prisma.server.update({ where: { id }, data: data as any });
   }
 
-  // ─── Jobs ──────────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Jobs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async listJobs(params: {
     page?: number;
@@ -96,8 +98,10 @@ export class ProvisioningService {
     serviceId?: string;
     status?: string;
   }) {
-    const { page = 1, perPage = 25, serviceId, status } = params;
-    const skip = (page - 1) * perPage;
+    const { page: _page, perPage: _perPage, serviceId, status } = params;
+    const page = Math.max(1, parseInt(String(_page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(_perPage ?? 25), 10) || 25);
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
 
     const where: Prisma.ProvisioningJobWhereInput = {
       ...(serviceId ? { serviceId } : {}),

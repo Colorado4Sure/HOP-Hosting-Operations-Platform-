@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+﻿import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -14,7 +14,7 @@ export class AutomationService {
     private notificationsService: NotificationsService,
   ) {}
 
-  // ─── Job Registry ──────────────────────────────────────────────────────────
+  // â”€â”€â”€ Job Registry â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async listJobs() {
     return this.prisma.automationJob.findMany({ orderBy: { slug: 'asc' } });
@@ -32,8 +32,10 @@ export class AutomationService {
   }
 
   async getJobLogs(slug: string, params: { page?: number; perPage?: number }) {
-    const { page = 1, perPage = 25 } = params;
-    const skip = (page - 1) * perPage;
+    const { page: _page, perPage: _perPage } = params;
+    const page = Math.max(1, parseInt(String(_page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(_perPage ?? 25), 10) || 25);
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
 
     const [data, total] = await Promise.all([
       this.prisma.jobRunLog.findMany({
@@ -122,7 +124,7 @@ export class AutomationService {
     return { slug, status, output: result, completedAt: new Date() };
   }
 
-  // ─── Handlers ──────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   private async runInvoiceGeneration(): Promise<string> {
     const now = new Date();
@@ -293,7 +295,7 @@ export class AutomationService {
     return `Pruned ${count} notification log entries older than 90 days`;
   }
 
-  // ─── Scheduled Tasks ───────────────────────────────────────────────────────
+  // â”€â”€â”€ Scheduled Tasks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async scheduledInvoiceGeneration() {

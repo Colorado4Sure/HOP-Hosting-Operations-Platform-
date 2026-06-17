@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+﻿import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { Prisma } from "@prisma/client";
 
@@ -6,7 +6,7 @@ import { Prisma } from "@prisma/client";
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
-  // ─── Product Groups ────────────────────────────────────────────────────────
+  // â”€â”€â”€ Product Groups â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async listProductGroups() {
     return this.prisma.productGroup.findMany({ orderBy: { sortOrder: "asc" } });
@@ -35,7 +35,7 @@ export class ProductsService {
     return this.prisma.productGroup.update({ where: { id }, data });
   }
 
-  // ─── Products ──────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Products â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async listProducts(params: {
     page?: number;
@@ -44,7 +44,9 @@ export class ProductsService {
     groupId?: string;
     search?: string;
   }) {
-    const { page = 1, perPage = 25, status, groupId, search } = params;
+    const page = Math.max(1, parseInt(String(params.page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(params.perPage ?? 25), 10) || 25);
+    const { status, groupId, search } = params;
     const skip = (page - 1) * perPage;
 
     const where: Prisma.ProductWhereInput = {
@@ -164,7 +166,7 @@ export class ProductsService {
     });
   }
 
-  // ─── Pricing ───────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Pricing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async addPricing(
     productId: string,
@@ -194,11 +196,13 @@ export class ProductsService {
     return this.prisma.productPricing.delete({ where: { id } });
   }
 
-  // ─── Addons ────────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Addons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async listAddons(params: { page?: number; perPage?: number }) {
-    const { page = 1, perPage = 25 } = params;
-    const skip = (page - 1) * perPage;
+    const { page: _page, perPage: _perPage } = params;
+    const page = Math.max(1, parseInt(String(_page ?? 1), 10) || 1);
+    const perPage = Math.max(1, parseInt(String(_perPage ?? 25), 10) || 25);
+    const skip = (Math.max(1, Number.isFinite(+page) ? +page : 1) - 1) * Math.max(1, Number.isFinite(+perPage) ? +perPage : 25);
 
     const [data, total] = await Promise.all([
       this.prisma.productAddon.findMany({
